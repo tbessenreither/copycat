@@ -171,7 +171,6 @@ class Copycat extends CopycatBase implements CopycatInterface
                 file: $target->value,
                 createIfNotExists: true,
             );
-            var_dump($file);
 
             $modifiedContent = EnvModifier::add(
                 fileContent: FileResolver::loadFile($file),
@@ -183,7 +182,6 @@ class Copycat extends CopycatBase implements CopycatInterface
             FileResolver::storeFileModification($file, $modifiedContent);
 
         } catch (Throwable $e) {
-            var_dump($e);
             $this->logError('envAdd', $e);
         }
     }
