@@ -264,7 +264,7 @@ You can choos to overwrite existing entries by setting the overwrite flag to tru
 ```php
 
 $copycat->envAdd(
-    entries: [ # this can also be a string if you want to add just a single entry
+    entries: [
         'MY_ENV' => 'value',
         'MY_OTHER_ENV_VAR' => 'other_value',
     ],

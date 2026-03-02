@@ -11,14 +11,11 @@ class EnvModifier
     public const string GROUP_END = '###< ';
 
     /**
-     * @param string|array<string, string> $entries
+     * @param array<string, string|int|bool> $entries
      */
-    public static function add(string $fileContent, array|string $entries, string $groupName, bool $overwrite = false): string
+    public static function add(string $fileContent, array $entries, string $groupName, bool $overwrite = false): string
     {
         $stats = ['added' => 0, 'skipped' => 0];
-        if (!is_array($entries)) {
-            $entries = [$entries];
-        }
 
         $fileContent = rtrim($fileContent);
 
@@ -137,16 +134,13 @@ class EnvModifier
         ];
     }
 
-    private static function createEnvLine(string $key, string|int|bool|null $value): string
+    private static function createEnvLine(string $key, string|int|bool $value): string
     {
         if (is_bool($value)) {
             $value = $value ? 'true' : 'false';
-        } elseif (is_null($value)) {
-            $value = 'null';
         } elseif (is_int($value)) {
             $value = (string) $value;
         }
-
         $key = mb_strtoupper($key);
         if (preg_match('/^[A-Za-z0-9_\.\/-]+$/', $value)) {
             return $key . '=' . $value;
