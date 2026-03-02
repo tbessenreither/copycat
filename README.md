@@ -46,25 +46,12 @@ Legend: ✅ supported, 🔨 working on it, 🔴 not supported
 
 ## Setup
 
-### Always
-
-Require Copycat as a dependency.
-
-First add the following lines to the `repositories` section of your `composer.json` to allow installation from GitHub:
-
-```json
-"repositories": [
-    {
-        "type": "vcs",
-        "url": "https://github.com/tbessenreither/copycat"
-    }
-]
-```
-
-Then require the package:
+Require Copycat as a dependency via composer.
 ```bash
 composer require tbessenreither/copycat
 ```
+
+While you don't technically need copycat as a dependency in your package it is recommendet to at least use it as a dev dependency so you can take advantage of autocompletion and prevent errors.
 
 
 ### Within a package
