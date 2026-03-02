@@ -11,7 +11,7 @@ class EnvModifier
     public const string GROUP_END = '###< ';
 
     /**
-     * @param array<string, string|int|bool> $entries
+     * @param array<string, string|int|float|bool> $entries
      */
     public static function add(string $fileContent, array $entries, string $groupName, bool $overwrite = false): string
     {
@@ -134,11 +134,11 @@ class EnvModifier
         ];
     }
 
-    private static function createEnvLine(string $key, string|int|bool $value): string
+    private static function createEnvLine(string $key, string|int|float|bool $value): string
     {
         if (is_bool($value)) {
             $value = $value ? 'true' : 'false';
-        } elseif (is_int($value)) {
+        } elseif (is_int($value) || is_float($value)) {
             $value = (string) $value;
         }
         $key = mb_strtoupper($key);
