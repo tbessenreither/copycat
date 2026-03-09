@@ -264,12 +264,63 @@ You can choos to overwrite existing entries by setting the overwrite flag to tru
 ```php
 
 $copycat->envAdd(
+    target: EnvTargetEnum::DOT_EXAMPLE,
     entries: [
         'MY_ENV' => 'value',
         'MY_OTHER_ENV_VAR' => 'other_value',
     ],
     overwrite: false, # Whether to overwrite the value if the key already exists in the .env file. Default is false to prevent accidental overwrites.
 );
+```
+
+You also can use the `EnvVar` class for a more defined way of adding env vars.
+```php
+use Tbessenreither\Copycat\Dto\EnvVar;
+
+$copycat->envAdd(
+    target: EnvTargetEnum::DOT_EXAMPLE,
+    entries: [
+        new EnvVar(
+            key: 'MY_ENV',
+            isFlag: true,
+            description: 'This is a flag that does something when it exists',
+        ),
+        new EnvVar(
+            key: 'STRING_SIMPLE',
+            value: 'other_value',
+            description: 'This is a string env var with a simple value',
+        ),
+        new EnvVar(
+            key: 'STRING_COMPLEX',
+            value: 'a more complex % string',
+        ),
+        new EnvVar(
+            key: 'INT_VAR',
+            value: 123,
+        ),
+        new EnvVar(
+            key: 'BOOL_VAR',
+            value: true,
+        ),
+        new EnvVar(
+            key: 'NULL_VAR',
+            value: null,
+        ),
+    ],
+    overwrite: false, # Whether to overwrite the value if the key already exists in the .env file. Default is false to prevent accidental overwrites.
+);
+```
+
+This will add the following entries:
+```text
+###> Tbessenreither\MyPackage
+BOOL_VAR=true
+INT_VAR=123
+MY_ENV="" # Flag # This is a flag that does something when it exists
+NULL_VAR=null
+STRING_COMPLEX="a more complex % string"
+STRING_SIMPLE=other_value # This is a string env var with a simple value
+###< Tbessenreither\MyPackage
 ```
 
 #### Available targets

@@ -1,7 +1,10 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tbessenreither\Copycat\Service;
 
+use Tbessenreither\Copycat\Dto\EnvVar;
 use Tbessenreither\Copycat\Enum\CopyTargetEnum;
 use Tbessenreither\Copycat\Enum\EnvTargetEnum;
 use Tbessenreither\Copycat\Enum\JsonTargetEnum;
@@ -14,10 +17,8 @@ use Tbessenreither\Copycat\Modifier\JsonModifier;
 use Tbessenreither\Copycat\Modifier\SymfonyModifier;
 use Throwable;
 
-
 class Copycat extends CopycatBase implements CopycatInterface
 {
-
     /**
      * Copies a file from the package to the specified target location in the project.
      * This method does not create directories if they do not exist, so the target directory must already exist before calling this method.
@@ -156,13 +157,23 @@ class Copycat extends CopycatBase implements CopycatInterface
     }
 
     /**
-     * @param array<string, string> $entries
+     * @param array<string|int, string|EnvVar> $entries
      */
     public function envAdd(EnvTargetEnum $target, array $entries, bool $overwrite = false): void
     {
         if (!is_array($entries)) {
             $entries = [$entries];
         }
+        foreach ($entries as $key => $entry) {
+            if (!$entry instanceof EnvVar) {
+                $entries[$key] = new EnvVar(
+                    name: (string)$key,
+                    value: (string)$entry,
+                );
+            }
+        }
+        $entries = array_values($entries); // reindex numerically for the modifier
+
         try {
             echo "    - Adding " . count($entries) . " entries to " . $target->value . ":" . PHP_EOL;
             SystemValidator::validateSystem($this->packageInfo, $target->getSystem());
@@ -171,6 +182,7 @@ class Copycat extends CopycatBase implements CopycatInterface
                 file: $target->value,
                 createIfNotExists: true,
             );
+            var_dump($file);
 
             $modifiedContent = EnvModifier::add(
                 fileContent: FileResolver::loadFile($file),
@@ -182,6 +194,7 @@ class Copycat extends CopycatBase implements CopycatInterface
             FileResolver::storeFileModification($file, $modifiedContent);
 
         } catch (Throwable $e) {
+            var_dump($e);
             $this->logError('envAdd', $e);
         }
     }

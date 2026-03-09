@@ -1,9 +1,11 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tbessenreither\Copycat\Modifier;
 
 use RuntimeException;
-
+use Tbessenreither\Copycat\Dto\EnvVar;
 
 class EnvModifier
 {
@@ -11,7 +13,7 @@ class EnvModifier
     public const string GROUP_END = '###< ';
 
     /**
-     * @param array<string, string|int|float|bool> $entries
+     * @param EnvVar[] $entries
      */
     public static function add(string $fileContent, array $entries, string $groupName, bool $overwrite = false): string
     {
@@ -43,21 +45,20 @@ class EnvModifier
         $groupLines = array_slice($lines, $groupIndexStart + 1, $groupIndexEnd - $groupIndexStart - 1);
         $linesAfterGroup = array_slice($lines, $groupIndexEnd);
 
-        foreach ($entries as $entryKey => $entryValue) {
-            $entryKey = mb_strtoupper($entryKey);
-            $entrySearchKey = $entryKey . '=';
+        foreach ($entries as $envVar) {
+            $entrySearchKey = $envVar->getName() . '=';
 
             // first we cleanup anny grouping issues by moving any existing entries with the same key into the group, so that we can handle them properly with the overwrite flag
             foreach ($linesBeforeGroup as $lineKey => $line) {
                 if (str_starts_with($line, $entrySearchKey)) {
-                    echo "        Entry with key " . $entryKey . " already exists, moving to group." . PHP_EOL;
+                    echo "        Entry with key " . $envVar->getName() . " already exists, moving to group." . PHP_EOL;
                     $groupLines[] = $line;
                     unset($linesBeforeGroup[$lineKey]);
                 }
             }
             foreach ($linesAfterGroup as $lineKey => $line) {
                 if (str_starts_with($line, $entrySearchKey)) {
-                    echo "        Entry with key " . $entryKey . " already exists, moving to group." . PHP_EOL;
+                    echo "        Entry with key " . $envVar->getName() . " already exists, moving to group." . PHP_EOL;
                     $groupLines[] = $line;
                     unset($linesAfterGroup[$lineKey]);
                 }
@@ -68,21 +69,26 @@ class EnvModifier
             foreach ($groupLines as $lineKey => $line) {
                 if (str_starts_with($line, $entrySearchKey)) {
                     if ($overwrite) {
-                        echo "        Entry with key " . $entryKey . " already exists in group, overwriting." . PHP_EOL;
+                        echo "        Entry with key " . $envVar->getName() . " already exists in group, overwriting." . PHP_EOL;
                         unset($groupLines[$lineKey]);
                     } else {
-                        echo "        Entry with key " . $entryKey . " already exists in group, skipping." . PHP_EOL;
+                        echo "        Entry with key " . $envVar->getName() . " already exists in group, skipping." . PHP_EOL;
                         $entryExists = true;
                     }
                 }
             }
             if (!$entryExists) {
-                $groupLines[] = self::createEnvLine(key: $entryKey, value: $entryValue);
+                $groupLines[] = $envVar->__toString();
                 $stats['added']++;
             } else {
                 $stats['skipped']++;
             }
         }
+
+        $groupLines = array_multisort(
+            $groupLines,
+            SORT_STRING | SORT_FLAG_CASE,
+        ) ? $groupLines : [];
 
         //put the group back into $linesWithoutGroup at the position of $groupIndexStart
         $lines = array_merge(
@@ -132,22 +138,6 @@ class EnvModifier
             'start' => self::GROUP_START . $groupName,
             'end' => self::GROUP_END . $groupName,
         ];
-    }
-
-    private static function createEnvLine(string $key, string|int|float|bool $value): string
-    {
-        if (is_bool($value)) {
-            $value = $value ? 'true' : 'false';
-        } elseif (is_int($value) || is_float($value)) {
-            $value = (string) $value;
-        }
-        $key = mb_strtoupper($key);
-        if (preg_match('/^[A-Za-z0-9_\.\/-]+$/', $value)) {
-            return $key . '=' . $value;
-        }
-
-        $escaped = addcslashes($value, "\\\"\n\r\t$");
-        return $key . "=\"{$escaped}\"";
     }
 
 }

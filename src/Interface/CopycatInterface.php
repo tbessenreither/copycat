@@ -1,16 +1,16 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tbessenreither\Copycat\Interface;
 
+use Tbessenreither\Copycat\Dto\EnvVar;
 use Tbessenreither\Copycat\Enum\CopyTargetEnum;
 use Tbessenreither\Copycat\Enum\EnvTargetEnum;
 use Tbessenreither\Copycat\Enum\JsonTargetEnum;
-use Throwable;
-
 
 interface CopycatInterface
 {
-
     /**
      * Copies a file from the package to the specified target location in the project.
      * This method does not create directories if they do not exist, so the target directory must already exist before calling this method.
@@ -30,7 +30,7 @@ interface CopycatInterface
     public function symfonyAddServiceToYaml(string $serviceClass, array $arguments = []): void;
 
     /**
-     * @param array<string, string> $entries
+     * @param array<string|int, string|EnvVar> $entries
      */
     public function envAdd(EnvTargetEnum $target, array $entries, bool $overwrite = false): void;
 
