@@ -1,9 +1,10 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tbessenreither\Copycat\Modifier;
 
 use RuntimeException;
-
 
 class GitignoreModifier
 {

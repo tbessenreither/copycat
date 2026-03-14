@@ -132,8 +132,13 @@ class Copycat extends CopycatBase implements CopycatInterface
         }
     }
 
-    public function symfonyAddServiceToYaml(string $serviceClass, array $arguments = []): void
-    {
+    public function symfonyAddServiceToYaml(
+        string $serviceClass,
+        ?array $arguments = null,
+        ?bool $public = null,
+        ?string $decorates = null,
+        ?array $tags = null,
+    ): void {
         try {
             echo "    - Adding service $serviceClass to symfony services.yaml." . PHP_EOL;
             SystemValidator::validateSystem($this->packageInfo, KnownSystemsEnum::SYMFONY);
@@ -147,6 +152,9 @@ class Copycat extends CopycatBase implements CopycatInterface
                 fileContent: FileResolver::loadFile($file),
                 serviceClass: $serviceClass,
                 arguments: $arguments,
+                public: $public,
+                decorates: $decorates,
+                tags: $tags,
             );
 
             FileResolver::storeFileModification($file, $modifiedContent);
@@ -182,7 +190,6 @@ class Copycat extends CopycatBase implements CopycatInterface
                 file: $target->value,
                 createIfNotExists: true,
             );
-            var_dump($file);
 
             $modifiedContent = EnvModifier::add(
                 fileContent: FileResolver::loadFile($file),

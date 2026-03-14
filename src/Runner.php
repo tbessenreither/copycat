@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tbessenreither\Copycat;
 
@@ -12,10 +14,8 @@ use Tbessenreither\Copycat\Service\CopycatReverse;
 use Tbessenreither\Copycat\Service\FileResolver;
 use Tbessenreither\Copycat\Service\NamespaceCrawler;
 
-
 class Runner
 {
-
     public static function run(Event|PackageEvent $event): void
     {
         echo str_repeat(PHP_EOL, 2);
@@ -54,6 +54,7 @@ class Runner
         foreach ($namespaces as $namespace) {
             if ($namespace->getComposerName() === $packageInfoStringCleaned) {
                 $packageInfo = $namespace;
+
                 break;
             }
         }

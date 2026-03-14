@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tbessenreither\Copycat\Modifier;
 
@@ -6,10 +8,8 @@ use ReflectionClass;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Bundle\BundleInterface;
 
-
 class SymfonyModifier
 {
-
     public static function addToBundle(string $fileContent, string $bundleClassName): string
     {
         self::checkIfBundleClassIsValid($bundleClassName);
@@ -45,6 +45,7 @@ class SymfonyModifier
         for ($i = $returnLineIndex + 1; $i < $endOfReturnLineIndex; $i++) {
             if (strcmp($lines[$i], $bundleLine) > 0) {
                 $insertIndex = $i;
+
                 break;
             }
         }
@@ -68,57 +69,43 @@ class SymfonyModifier
         return implode(PHP_EOL, $lines);
     }
 
-    public static function addServiceToYaml(string $fileContent, string $serviceClass, array $arguments = []): string
-    {
+    public static function addServiceToYaml(
+        string $fileContent,
+        string $serviceClass,
+        ?array $arguments = null,
+        ?bool $public = null,
+        ?string $decorates = null,
+        ?array $tags = null,
+    ): string {
         $yamlLines = explode(PHP_EOL, $fileContent);
 
-        $servicesLineNumber = array_search('services:', $yamlLines, true) + 1;
-        if ($servicesLineNumber === false) {
-            $servicesLineNumber = count($yamlLines);
-            $yamlLines[] = 'services:';
-        }
-        $endOfServicesLineNumber = $servicesLineNumber + 1;
-        for ($i = $endOfServicesLineNumber; $i < count($yamlLines); $i++) {
-            $line = $yamlLines[$i];
-
-            if (mb_strpos(trim($line), $serviceClass . ':') === 0) {
-                throw new RuntimeException('Service ' . $serviceClass . ' is already registered in services.yaml, skipping.');
-            }
-
-            if (mb_strpos($yamlLines[$i], '    ') === 0 || empty(trim($yamlLines[$i]))) { // check if the line is indented with 2 spaces or is empty, which means we're still in the services section
-                $endOfServicesLineNumber = $i;
-            } else { // we're no longer in the services section due to indentation
-                break;
-            }
-        }
-
-        $serviceConfig = [];
-        $serviceConfig[$serviceClass] = [
+        $serviceElement = [
             'class' => $serviceClass,
         ];
-
-        if (!empty($arguments)) {
-            $serviceConfig[$serviceClass]['arguments'] = $arguments;
+        if ($public !== null) {
+            $serviceElement['public'] = $public;
+        }
+        if ($decorates !== null) {
+            $serviceElement['decorates'] = $decorates;
+        }
+        if ($tags !== null) {
+            $serviceElement['tags'] = $tags;
+        }
+        if ($arguments !== null) {
+            $serviceElement['arguments'] = $arguments;
         }
 
-        $serviceConfigYaml = yaml_emit($serviceConfig, YAML_UTF8_ENCODING, YAML_LN_BREAK);
-        $serviceConfigYaml = trim($serviceConfigYaml);
-        $addedLinesYaml = explode(PHP_EOL, $serviceConfigYaml);
-        // remove the first line which is "---" and the last line which is "..."
-        array_shift($addedLinesYaml);
-        array_pop($addedLinesYaml);
-        // add an empty line before and after the added lines for better readability
-        array_unshift($addedLinesYaml, '');
-        array_push($addedLinesYaml, '');
-        $serviceConfigYaml = implode(PHP_EOL, $addedLinesYaml);
-        // change to default indentation instead of 2
-        $serviceConfigYaml = str_replace('  ', YamlModifier::INDENTATION, $serviceConfigYaml);
-        $serviceConfigYaml = YamlModifier::INDENTATION . str_replace(PHP_EOL, PHP_EOL . YamlModifier::INDENTATION, $serviceConfigYaml);
+        $elementsToAdd = [
+            $serviceClass => $serviceElement,
+        ];
 
-        // Insert the new service config at the correct position
-        array_splice($yamlLines, $endOfServicesLineNumber + 1, 0, $serviceConfigYaml);
+        $modifiedLines = YamlModifier::insertArrayIntoObject(
+            lines: $yamlLines,
+            insertBlockKey: 'services',
+            insertArray: $elementsToAdd,
+        );
 
-        $yamlString = implode(PHP_EOL, $yamlLines);
+        $yamlString = implode(PHP_EOL, $modifiedLines);
 
         return $yamlString;
     }

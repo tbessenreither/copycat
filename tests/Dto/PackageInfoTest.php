@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Tbessenreither\Copycat\Tests\Dto;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tbessenreither\Copycat\Dto\PackageInfo;
 use Tbessenreither\Copycat\Tests\TestCase;
 
+#[CoversClass(PackageInfo::class)]
 class PackageInfoTest extends TestCase
 {
     public function testSetterAndGetter(): void

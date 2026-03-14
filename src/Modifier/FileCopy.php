@@ -1,14 +1,14 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tbessenreither\Copycat\Modifier;
 
 use InvalidArgumentException;
 use RuntimeException;
 
-
 class FileCopy
 {
-
     public static function copy(string $source, string $destinationDirectory, bool $overwrite = true, bool $createTargetDirectory = false): void
     {
         if (!file_exists($source) || !is_file($source)) {

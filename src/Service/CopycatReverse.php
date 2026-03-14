@@ -16,6 +16,7 @@ use Tbessenreither\Copycat\Modifier\FileCopy;
 use Tbessenreither\Copycat\Modifier\GitignoreModifier;
 use Tbessenreither\Copycat\Modifier\JsonModifier;
 use Tbessenreither\Copycat\Modifier\SymfonyModifier;
+use Tbessenreither\Copycat\Modifier\YamlModifier;
 use Throwable;
 
 class CopycatReverse extends CopycatBase implements CopycatInterface
@@ -136,15 +137,14 @@ class CopycatReverse extends CopycatBase implements CopycatInterface
                 packageInfo: $this->packageInfo,
                 file: 'config/services.yaml',
             );
-            throw new RuntimeException('symfonyAddServiceToYaml reversal is not implemented in CopycatReverse.');
 
-            $modifiedContent = SymfonyModifier::addServiceToYaml(
-                fileContent: FileResolver::loadFile($file),
-                serviceClass: $serviceClass,
-                arguments: $arguments,
+            $modifiedContent = YamlModifier::cleanObjectFromLines(
+                lines: explode(PHP_EOL, FileResolver::loadFile($file)),
+                clearKeys: [$serviceClass],
             );
+            $modifiedContentString = implode(PHP_EOL, $modifiedContent);
 
-            FileResolver::storeFileModification($file, $modifiedContent);
+            FileResolver::storeFileModification($file, $modifiedContentString);
 
         } catch (Throwable $e) {
             $this->logError('symfonyAddServiceToYaml', $e);

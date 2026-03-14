@@ -11,6 +11,10 @@ return (new PhpCsFixer\Config())
         '@PSR12' => true,
         'no_unused_imports' => true,
         'modifier_keywords' =>  ['elements' => ['const', 'method']],
+        'concat_space' => ['spacing' => 'one'],
+        'ordered_imports' => true,
+        'blank_line_before_statement' => ['statements' => ['return', 'exit','throw', 'continue', 'break']],
+        'types_spaces' => ['space' => 'none'],
     ])
     ->setFinder($finder)
 ;

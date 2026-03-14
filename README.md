@@ -39,7 +39,7 @@ Legend: ✅ supported, 🔨 working on it, 🔴 not supported
 |            | copy | jsonAdd | gitIgnoreAdd | symfonyBundleAdd | symfonyServiceYaml | envAdd |
 |------------|------|---------|--------------|------------------|--------------------|--------|
 | Write      | ✅   | ✅      | ✅           | ✅               | ✅                 | ✅     |
-| Revert     | ✅   | ✅      | ✅           | ✅               | 🔨                 | ✅     |
+| Revert     | ✅   | ✅      | ✅           | ✅               | ✅                 | ✅     |
 
 
 ---
@@ -252,6 +252,16 @@ $copycat->symfonyAddServiceToYaml(
     arguments: [ # Optional array of arguments to be passed to the service. This can be used to automatically wire services with their dependencies.
         '$argument1' => 'value1',
         '$argument2' => 'value2',
+    ],
+    $public = true,
+    $decorates = 'some/class',
+    $tags = [
+        'mytag1' => [
+            'name' => 'ding',
+            'template' => 'hat'
+            'id' => 'swing',
+            'priority' => 100,
+        ],
     ],
 );
 ```

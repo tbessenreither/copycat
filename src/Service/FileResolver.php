@@ -1,12 +1,11 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tbessenreither\Copycat\Service;
 
-use Directory;
 use InvalidArgumentException;
 use Tbessenreither\Copycat\Dto\PackageInfo;
-use Tbessenreither\Copycat\Enum\CopyTargetEnum;
-
 
 class FileResolver
 {
@@ -78,6 +77,7 @@ class FileResolver
         if ($resolvedFile === false || !file_exists($resolvedFile) || !is_file($resolvedFile)) {
             throw new InvalidArgumentException('Project file not found: ' . $file);
         }
+
         return $resolvedFile;
     }
 

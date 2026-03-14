@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit bootstrap="tests/bootstrap.php" colors="true" verbose="true"
-	convertDeprecationsToExceptions="false"
-	convertWarningsToExceptions="false"
-	convertNoticesToExceptions="false"
-	convertErrorsToExceptions="false"
-	failOnWarning="false">
+
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+	backupGlobals="false"
+	colors="true"
+	bootstrap="tests/bootstrap.php"
+	beStrictAboutCoverageMetadata="true"
+	requireCoverageMetadata="true">
+
 	<php>
-		<ini name="display_errors" value="1" />
-		<ini name="display_startup_errors" value="1" />
-		<ini name="error_reporting" value="-1" />
+		<ini name="display_errors" value="On" />
+		<ini name="error_reporting" value="E_ALL" />
+		<server name="APP_ENV" value="test" force="true" />
+		<server name="SHELL_VERBOSITY" value="-1" />
+		<server name="SYMFONY_PHPUNIT_VERSION" value="11.4" />
 	</php>
 
 	<testsuites>
@@ -17,9 +22,15 @@
 		</testsuite>
 	</testsuites>
 
-	<coverage processUncoveredFiles="true">
+	<source>
 		<include>
-			<directory suffix=".php">src/</directory>
+			<directory suffix=".php">src</directory>
 		</include>
+	</source>
+
+	<coverage ignoreDeprecatedCodeUnits="true" pathCoverage="false">
+		<report>
+			<text outputFile="php://stdout" showUncoveredFiles="true" showOnlySummary="true" />
+		</report>
 	</coverage>
 </phpunit>

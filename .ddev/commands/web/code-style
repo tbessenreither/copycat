@@ -1,0 +1,28 @@
+#!/bin/bash
+
+## Description: Run PHP CS Fixer to check or fix code style
+## Usage: code-style [fix]
+## Aliases: code-style,cs
+## Example: "ddev code-style" or "ddev code-style fix"
+
+if [ ! -f "vendor/bin/php-cs-fixer" ]; then
+    echo -e "\033[33mPHP CS Fixer is not installed.\033[0m"
+    echo "To install it, run: composer require --dev friendsofphp/php-cs-fixer"
+    exit 0
+fi
+
+if [ -n "$1" ] && [ "$1" != "fix" ]; then
+    echo -e "\033[31mError: Invalid argument '$1'\033[0m"
+    echo "Usage: code-style [fix]"
+    exit 1
+fi
+
+if [ "$1" == "fix" ]; then
+    vendor/bin/php-cs-fixer fix -v
+    if [ $? -eq 0 ]; then
+        echo -e "\033[32m✓ Code style fixed successfully!\033[0m"
+    fi
+else
+    # Run in dry-run mode (default behavior)
+    vendor/bin/php-cs-fixer fix --dry-run --diff -v --show-progress=none
+fi

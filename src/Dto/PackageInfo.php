@@ -1,11 +1,11 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tbessenreither\Copycat\Dto;
 
-
 class PackageInfo
 {
-
     public function __construct(
         private string $namespace,
         private string $projectPath,

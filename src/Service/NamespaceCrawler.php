@@ -1,13 +1,13 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tbessenreither\Copycat\Service;
 
 use Tbessenreither\Copycat\Dto\PackageInfo;
 
-
 class NamespaceCrawler
 {
-
     /**
      * @return PackageInfo[]
      */
@@ -46,6 +46,7 @@ class NamespaceCrawler
 
                 if (!file_exists($composerFile)) {
                     echo "No composer.json found in " . $composerFile . PHP_EOL;
+
                     continue;
                 }
 
@@ -65,6 +66,7 @@ class NamespaceCrawler
                             $path = $path[0];
                         } else {
                             echo "Multiple paths for namespace " . $namespace . " in package " . $vendorFolder . '/' . $packageFolder . PHP_EOL;
+
                             continue;
                         }
                     }
@@ -81,11 +83,13 @@ class NamespaceCrawler
                             $whitelistMatch = false;
                             if (str_starts_with($namespace, $whitelistedNamespace)) {
                                 $whitelistMatch = true;
+
                                 break;
                             }
                         }
                         if (!$whitelistMatch) {
                             echo "    Namespace " . $namespace . " is not in the whitelist, skipping." . PHP_EOL;
+
                             continue;
                         }
                     }

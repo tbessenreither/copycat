@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Tbessenreither\Copycat\Tests\Dto;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tbessenreither\Copycat\Dto\EnvVar;
 use Tbessenreither\Copycat\Tests\TestCase;
 
+#[CoversClass(EnvVar::class)]
 class EnvVarTest extends TestCase
 {
     public function testSetterAndGetter(): void

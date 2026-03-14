@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tbessenreither\Copycat\Service;
 
@@ -6,10 +8,8 @@ use RuntimeException;
 use Tbessenreither\Copycat\Dto\PackageInfo;
 use Tbessenreither\Copycat\Enum\KnownSystemsEnum;
 
-
 class SystemValidator
 {
-
     public static function validateSystem(PackageInfo $packageInfo, ?KnownSystemsEnum $system): void
     {
         if ($system === null) {

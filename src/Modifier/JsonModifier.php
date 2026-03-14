@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tbessenreither\Copycat\Modifier;
 
@@ -6,10 +8,8 @@ use InvalidArgumentException;
 use RuntimeException;
 use Tbessenreither\Copycat\Enum\JsonTargetEnum;
 
-
 class JsonModifier
 {
-
     public static function add(string $fileContent, string $path, mixed $value, bool $overwrite = false): string
     {
         $jsonData = json_decode($fileContent, true);
@@ -19,21 +19,25 @@ class JsonModifier
         foreach ($keys as $key) {
             if (is_array($current) && array_key_exists($key, $current)) {
                 $current = &$current[$key];
+
                 continue;
             } elseif (is_array($current) && !array_key_exists($key, $current)) {
                 $current[$key] = null;
                 $current = &$current[$key];
+
                 continue;
             } elseif (!is_array($current)) {
                 if ($current === null) {
                     $current = [];
                     $current[$key] = null;
                     $current = &$current[$key];
+
                     continue;
                 } elseif ($overwrite) {
                     $current = [];
                     $current[$key] = null;
                     $current = &$current[$key];
+
                     continue;
                 } else {
                     throw new RuntimeException('Cannot add value at path "' . $path . '" because there is a non-array value at "' . implode('.', array_slice($keys, 0, count($keys) - 1)) . '" and overwrite is set to false.');
@@ -68,6 +72,7 @@ class JsonModifier
         foreach ($keys as $key) {
             if (is_array($current) && array_key_exists($key, $current)) {
                 $current = &$current[$key];
+
                 continue;
             } else {
                 throw new RuntimeException('No entry found at path "' . $path . '", skipping.');

@@ -1,9 +1,8 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tbessenreither\Copycat\Enum;
-
-use function PHPSTORM_META\map;
-
 
 enum JsonTargetEnum: string
 {
