@@ -27,7 +27,13 @@ interface CopycatInterface
 
     public function symfonyBundleAdd(string $bundleClassName): void;
 
-    public function symfonyAddServiceToYaml(string $serviceClass, array $arguments = []): void;
+    public function symfonyAddServiceToYaml(
+        string $serviceClass,
+        ?array $arguments = null,
+        ?bool $public = null,
+        ?string $decorates = null,
+        ?array $tags = null,
+    ): void;
 
     /**
      * @param array<string|int, string|EnvVar> $entries

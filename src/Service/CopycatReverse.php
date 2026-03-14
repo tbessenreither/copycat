@@ -127,8 +127,13 @@ class CopycatReverse extends CopycatBase implements CopycatInterface
         }
     }
 
-    public function symfonyAddServiceToYaml(string $serviceClass, array $arguments = []): void
-    {
+    public function symfonyAddServiceToYaml(
+        string $serviceClass,
+        ?array $arguments = null,
+        ?bool $public = null,
+        ?string $decorates = null,
+        ?array $tags = null,
+    ): void {
         try {
             echo "    - Removing service $serviceClass from symfony services.yaml." . PHP_EOL;
             SystemValidator::validateSystem($this->packageInfo, KnownSystemsEnum::SYMFONY);
