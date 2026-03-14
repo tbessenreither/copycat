@@ -6,7 +6,6 @@ namespace Tbessenreither\Copycat\Modifier;
 
 use ReflectionClass;
 use RuntimeException;
-use Symfony\Component\HttpKernel\Bundle\BundleInterface;
 
 class SymfonyModifier
 {
@@ -118,7 +117,7 @@ class SymfonyModifier
 
         $reflectionClass = new ReflectionClass($bundleClassName);
         //check if it implements the BundleInterface
-        if (!$reflectionClass->implementsInterface(BundleInterface::class)) {
+        if (!$reflectionClass->implementsInterface("Symfony\\Component\\HttpKernel\\Bundle\\BundleInterface")) {
             throw new RuntimeException('Bundle class ' . $bundleClassName . ' does not implement the Symfony BundleInterface. This will not be added to bundles.php');
         }
     }
