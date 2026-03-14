@@ -145,7 +145,7 @@ YAML;
 
     public function testFindClosingLineWithoutMatch(): void
     {
-        $this->assertEquals(1, YamlModifier::findClosingLine(['no indentation'], 0));
+        $this->assertEquals(0, YamlModifier::findClosingLine(['no indentation'], 0));
     }
 
     public function testGetIndentLength(): void
@@ -161,10 +161,10 @@ YAML;
         $fileContent = file_get_contents(__DIR__ . '/../TestFiles/services.yaml');
         $lines = explode(PHP_EOL, $fileContent);
 
-        $this->assertEquals(13, YamlModifier::findClosingLine($lines, 6), 'Failed to find the closing line for parameters (#9)');
-        $this->assertEquals(28, YamlModifier::findClosingLine($lines, 21), 'Failed to find the closing line for App\ (#22)');
-        $this->assertEquals(35, YamlModifier::findClosingLine($lines, 30), 'Failed to find the closing line for OllamaEmbeddingGenerator (#31)');
-        $this->assertEquals(54, YamlModifier::findClosingLine($lines, 13), 'Failed to find the closing line for services (#14)');
+        $this->assertEquals(12, YamlModifier::findClosingLine($lines, 6), 'Failed to find the closing line for parameters (#9)');
+        $this->assertEquals(27, YamlModifier::findClosingLine($lines, 21), 'Failed to find the closing line for App\ (#22)');
+        $this->assertEquals(34, YamlModifier::findClosingLine($lines, 30), 'Failed to find the closing line for OllamaEmbeddingGenerator (#31)');
+        $this->assertEquals(53, YamlModifier::findClosingLine($lines, 13), 'Failed to find the closing line for services (#14)');
     }
 
     public function testCleanObjectFromLines(): void

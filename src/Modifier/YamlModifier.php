@@ -93,12 +93,17 @@ class YamlModifier
     {
         $indentLength = self::getIndentLength($lines[$startLine]);
         for ($i = $startLine + 1; $i < count($lines); $i++) {
+            if (!isset($lines[$i])) {
+                continue;
+            }
             if (self::getIndentLength($lines[$i]) <= $indentLength && trim($lines[$i]) !== '') {
-                return $i;
+                return $i - 1;
             }
         }
 
-        return count($lines);
+        $keys = array_keys($lines);
+
+        return max($keys);
     }
 
     public static function cleanObjectFromLines(array $lines, array $clearKeys): array
@@ -118,7 +123,7 @@ class YamlModifier
             $startLine = $lineNumber;
             $startLineUpwardsSearch = self::findStartingLine($lines, $startLine);
             $endLine = self::findClosingLine($lines, $startLine);
-            for ($i = $startLineUpwardsSearch; $i < $endLine; $i++) {
+            for ($i = $startLineUpwardsSearch; $i <= $endLine; $i++) {
                 unset($lines[$i]);
             }
         }
