@@ -253,9 +253,9 @@ $copycat->symfonyAddServiceToYaml(
         '$argument1' => 'value1',
         '$argument2' => 'value2',
     ],
-    $public = true,
-    $decorates = 'some/class',
-    $tags = [
+    public: true,
+    decorates: 'some/class',
+    tags: [
         'mytag1' => [
             'name' => 'ding',
             'template' => 'hat'
