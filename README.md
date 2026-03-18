@@ -291,29 +291,29 @@ $copycat->envAdd(
     target: EnvTargetEnum::DOT_EXAMPLE,
     entries: [
         new EnvVar(
-            key: 'MY_ENV',
+            name: 'MY_ENV',
             isFlag: true,
             description: 'This is a flag that does something when it exists',
         ),
         new EnvVar(
-            key: 'STRING_SIMPLE',
+            name: 'STRING_SIMPLE',
             value: 'other_value',
             description: 'This is a string env var with a simple value',
         ),
         new EnvVar(
-            key: 'STRING_COMPLEX',
+            name: 'STRING_COMPLEX',
             value: 'a more complex % string',
         ),
         new EnvVar(
-            key: 'INT_VAR',
+            name: 'INT_VAR',
             value: 123,
         ),
         new EnvVar(
-            key: 'BOOL_VAR',
+            name: 'BOOL_VAR',
             value: true,
         ),
         new EnvVar(
-            key: 'NULL_VAR',
+            name: 'NULL_VAR',
             value: null,
         ),
     ],
