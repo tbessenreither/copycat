@@ -18,8 +18,10 @@ class Runner
 {
     public static function run(Event|PackageEvent $event): void
     {
-        echo str_repeat(PHP_EOL, 2);
-        echo "Running PHP Copycat..." . PHP_EOL;
+        echo str_repeat(PHP_EOL, 2) . "\033[32m";
+        echo "==========================================" . PHP_EOL;
+        echo "          Running PHP Copycat..." . PHP_EOL;
+        echo "==========================================" . "\033[0m" . PHP_EOL;
         if ($event instanceof Event) {
             self::onInstallOrUpdate();
         } elseif ($event instanceof PackageEvent) {
@@ -32,7 +34,7 @@ class Runner
             }
         }
         FileResolver::writeBufferedFilesToDisk();
-        echo PHP_EOL . "PHP Copycat finished." . PHP_EOL;
+        echo PHP_EOL . "\033[32m" . "PHP Copycat finished." . "\033[0m" . PHP_EOL;
         echo str_repeat(PHP_EOL, 2);
     }
 
@@ -106,7 +108,8 @@ class Runner
                 continue;
             }
 
-            echo "Running copycat for namespace " . $packageInfo->getNamespace() . PHP_EOL;
+            echo "\n\033[34m";
+            echo "Running copycat for namespace " . $packageInfo->getNamespace() . "\033[0m" . PHP_EOL;
             $copycatClass::run($copycatInstance);
         }
     }

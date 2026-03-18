@@ -105,7 +105,7 @@ class FileResolver
 
     public static function writeBufferedFilesToDisk(): void
     {
-        echo PHP_EOL . "Writing buffered file modifications to disk..." . PHP_EOL;
+        echo PHP_EOL . "\033[34m" . "Writing buffered file modifications to disk..." . "\033[0m" . PHP_EOL;
         foreach (self::$bufferedFiles as $file => $content) {
             echo "    - Writing file to disk: $file" . PHP_EOL;
             file_put_contents($file, $content);
