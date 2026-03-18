@@ -6,6 +6,7 @@ namespace Tbessenreither\Copycat\Enum;
 
 enum CopyTargetEnum: string
 {
+    case PROJECT_ROOT = '.';
     case DDEV_COMMANDS_WEB = '.ddev/commands/web';
     case DDEV_COMMANDS_HOST = '.ddev/commands/host';
     case SYMFONY_BIN = 'bin';
