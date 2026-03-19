@@ -14,12 +14,14 @@ enum CopyTargetEnum: string
     case SYMFONY_CONFIG_ROUTES = 'config/routes';
     case PUBLIC = 'public';
     case COPYCAT_CONFIG = '.copycat';
+    case GIT_HOOKS = '.git/hooks';
 
     public function getSystem(): ?KnownSystemsEnum
     {
         return match ($this) {
             self::DDEV_COMMANDS_WEB, self::DDEV_COMMANDS_HOST                             => KnownSystemsEnum::DDEV,
             self::SYMFONY_BIN, self::SYMFONY_CONFIG_PACKAGES, self::SYMFONY_CONFIG_ROUTES => KnownSystemsEnum::SYMFONY,
+            self::GIT_HOOKS                                                               => KnownSystemsEnum::GIT,
             default                                                                       => null,
         };
     }
