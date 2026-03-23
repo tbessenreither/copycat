@@ -6,28 +6,31 @@ namespace Tbessenreither\Copycat\Enum;
 
 enum KnownSystemsEnum: string
 {
-    case SYMFONY = 'symfony';
+    case COMPOSER = 'composer';
     case DDEV = 'ddev';
     case GIT = 'git';
-    case COMPOSER = 'composer';
+    case PHPSTORM = 'phpstorm';
+    case SYMFONY = 'symfony';
 
     public function getIndicatorFile(): string
     {
         return match ($this) {
-            self::SYMFONY  => '/config/bundles.php',
+            self::COMPOSER => '/composer.json',
             self::DDEV     => '/.ddev',
             self::GIT      => '/.git',
-            self::COMPOSER => '/composer.json',
+            self::PHPSTORM => '/.idea',
+            self::SYMFONY  => '/config/bundles.php',
         };
     }
 
     public function getIndicatorType(): string
     {
         return match ($this) {
-            self::SYMFONY  => 'file',
+            self::COMPOSER => 'file',
             self::DDEV     => 'directory',
             self::GIT      => 'directory',
-            self::COMPOSER => 'file',
+            self::PHPSTORM => 'directory',
+            self::SYMFONY  => 'file',
         };
     }
 
