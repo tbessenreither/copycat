@@ -28,8 +28,6 @@ Config files like the `composer.json` have additional protections to prevent mal
 ### Planned Features
 
 PHP Copycat is actively developed. Planned features include:
-- Support for reversing all operations on package removal (e.g., removing copied files, removing bundle, removing services, removing .gitignore section).
-- Support for modifying yaml configuration files
 - Echo of messages after execution (e.g., "Package [Packagename]: To use this package, do X, Y, Z...")
 
 ### Operation support matrix
@@ -191,13 +189,17 @@ $copycat->copy(
 ```
 
 #### Available targets
+- `CopyTargetEnum::PROJECT_ROOT` - copies to the root directory of the repository.
 - `CopyTargetEnum::DDEV_COMMANDS_WEB` - copies to the `.ddev/commands/web` directory of the project. Only runs if the project is a DDEV project.
 - `CopyTargetEnum::DDEV_COMMANDS_HOST` - copies to the `.ddev/commands/host` directory of the project. Only runs if the project is a DDEV project.
+- `CopyTargetEnum::PHPSTORM_EDITOR_IDEA` - copies to the `.idea` directory.
+- `CopyTargetEnum::PHPSTORM_RUN_CONFIG` - copies to the `.run` directory.
 - `CopyTargetEnum::SYMFONY_BIN` - copies to the `bin` directory of the project. Only runs if the project is a Symfony app.
 - `CopyTargetEnum::SYMFONY_CONFIG_PACKAGES` - copies to the `config/packages` directory of the project. Only runs if the project is a Symfony app.
 - `CopyTargetEnum::SYMFONY_CONFIG_ROUTES` - copies to the `config/routes` directory of the project. Only runs if the project is a Symfony app.
 - `CopyTargetEnum::PUBLIC` - copies to the `public` directory of the project.
 - `CopyTargetEnum::COPYCAT_CONFIG` - copies files to the `.copycat` directory in the project root.
+- `CopyTargetEnum::GIT_HOOKS` - copies files to the `.git/hooks` directory in the project root.
 
 ### jsonAdd
 
@@ -336,9 +338,10 @@ STRING_SIMPLE=other_value # This is a string env var with a simple value
 #### Available targets
  All files will be created if they don't exist. There is no system check for this operation, as .env files are used in various types of projects, so it's up to you to make sure that you are adding entries to the right file for your project type and use case.
 
+- `EnvTargetEnum::DOT_DEV` - modifies the `.env.dev` file.
+- `EnvTargetEnum::DOT_EXAMPLE` - modifies the `.env.example` file.
 - `EnvTargetEnum::DOT_LOCAL` - modifies the `.env.local` file.
 - `EnvTargetEnum::DOT_TEST` - modifies the `.env.test` file.
-- `EnvTargetEnum::DOT_EXAMPLE` - modifies the `.env.example` file.
 
 ---
 
