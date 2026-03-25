@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace Tbessenreither\Copycat\Service;
 
 use InvalidArgumentException;
+use Tbessenreither\Copycat\Config\FileFilter;
+use Tbessenreither\Copycat\Dto\FilterItem;
 use Tbessenreither\Copycat\Dto\PackageInfo;
+use Tbessenreither\Copycat\Enum\FilterTypeEnum;
 
 class FileResolver
 {
@@ -81,14 +84,24 @@ class FileResolver
         return $resolvedFile;
     }
 
-    public static function loadFile(string $file): string
+    public static function loadFile(string $file, ?FilterItem $useFilterItem = null): string
     {
+        if ($useFilterItem === null) {
+            $useFilterItem = FileFilter::getFilter();
+        }
+
         if (!isset(self::$bufferedFiles[$file])) {
 
             echo "        Loading file: $file" . PHP_EOL;
             if (!file_exists($file) || !is_file($file)) {
                 throw new InvalidArgumentException('File not found: ' . $file);
             }
+
+            $filterResult = FilterService::checkPathArray(explode(DIRECTORY_SEPARATOR, $file), $useFilterItem);
+            if ($filterResult === FilterTypeEnum::BLACKLIST) {
+                throw new InvalidArgumentException('File is blacklisted and cannot be loaded: ' . $file);
+            }
+
             $fileData = file_get_contents($file);
 
             self::$bufferedFiles[$file] = $fileData;
