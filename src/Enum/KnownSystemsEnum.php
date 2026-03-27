@@ -11,6 +11,7 @@ enum KnownSystemsEnum: string
     case GIT = 'git';
     case PHPSTORM = 'phpstorm';
     case SYMFONY = 'symfony';
+    case VSCODE = 'vscode';
 
     public function getIndicatorFile(): string
     {
@@ -20,6 +21,7 @@ enum KnownSystemsEnum: string
             self::GIT      => '/.git',
             self::PHPSTORM => '/.idea',
             self::SYMFONY  => '/config/bundles.php',
+            self::VSCODE   => '/.vscode',
         };
     }
 
@@ -31,6 +33,7 @@ enum KnownSystemsEnum: string
             self::GIT      => 'directory',
             self::PHPSTORM => 'directory',
             self::SYMFONY  => 'file',
+            self::VSCODE   => 'directory',
         };
     }
 
