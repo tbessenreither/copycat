@@ -26,7 +26,7 @@ enum KnownSystemsEnum: string
             self::COMPOSER => [new SystemIndicator(SystemIndicatorTypeEnum::FILE, '/composer.json')],
             self::DDEV     => [new SystemIndicator(SystemIndicatorTypeEnum::DIRECTORY, '/.ddev')],
             self::GIT      => [new SystemIndicator(SystemIndicatorTypeEnum::DIRECTORY, '/.git')],
-            self::PHPSTORM => [new SystemIndicator(SystemIndicatorTypeEnum::DIRECTORY, '/.idea'), new SystemIndicator(SystemIndicatorTypeEnum::ENV, 'IDE=phpStorm')],
+            self::PHPSTORM => [new SystemIndicator(SystemIndicatorTypeEnum::DIRECTORY, '/.idea'), new SystemIndicator(SystemIndicatorTypeEnum::ENV, 'IDE=phpstorm')],
             self::SYMFONY  => [new SystemIndicator(SystemIndicatorTypeEnum::FILE, '/config/bundles.php')],
             self::VSCODE   => [new SystemIndicator(SystemIndicatorTypeEnum::DIRECTORY, '/.vscode'), new SystemIndicator(SystemIndicatorTypeEnum::ENV, 'IDE=vscode')],
         };
