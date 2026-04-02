@@ -42,7 +42,11 @@ class Copycat extends CopycatBase implements CopycatInterface
             );
 
             if ($gitIgnore) {
-                $this->gitIgnoreAdd($target->value . '/' . basename($file));
+                $gitignoreValue = $target->value . '/' . basename($file);
+                if (str_starts_with($gitignoreValue, './')) {
+                    $gitignoreValue = substr($gitignoreValue, 2);
+                }
+                $this->gitIgnoreAdd($gitignoreValue);
             }
 
         } catch (Throwable $e) {
