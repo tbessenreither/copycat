@@ -29,4 +29,16 @@ enum CopyTargetEnum: string
         };
     }
 
+    public function isExecutable(): bool
+    {
+        return match ($this) {
+            self::DDEV_COMMANDS_WEB,
+            self::DDEV_COMMANDS_HOST,
+            self::SYMFONY_BIN,
+            self::GIT_HOOKS => true,
+
+            default => false,
+        };
+    }
+
 }

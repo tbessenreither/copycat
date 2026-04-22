@@ -9,7 +9,7 @@ use RuntimeException;
 
 class FileCopy
 {
-    public static function copy(string $source, string $destinationDirectory, bool $overwrite = true, bool $createTargetDirectory = false): void
+    public static function copy(string $source, string $destinationDirectory, bool $overwrite = true, bool $createTargetDirectory = false, bool $executable = false): void
     {
         if (!file_exists($source) || !is_file($source)) {
             throw new InvalidArgumentException('Source file does not exist: ' . $source);
@@ -31,6 +31,12 @@ class FileCopy
 
         if (!copy($source, $destination)) {
             throw new RuntimeException('Failed to copy file from ' . $source . ' to ' . $destination);
+        }
+
+        if ($executable) {
+            if (!chmod($destination, 0755)) {
+                throw new RuntimeException('Failed to set executable permissions for ' . $destination);
+            }
         }
     }
 
