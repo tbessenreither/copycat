@@ -39,6 +39,7 @@ class Copycat extends CopycatBase implements CopycatInterface
                 destinationDirectory: $this->getTargetDir($target),
                 overwrite: $overwrite,
                 createTargetDirectory: $createTargetDirectory,
+                executable: $target->isExecutable(),
             );
 
             if ($gitIgnore) {

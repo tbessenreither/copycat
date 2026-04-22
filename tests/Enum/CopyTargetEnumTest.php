@@ -22,6 +22,10 @@ class CopyTargetEnumTest extends TestCase
                 $system === null || $system instanceof KnownSystemsEnum,
                 sprintf('Expected getSystem() to return null or an instance of KnownSystemsEnum for case %s', $case->name)
             );
+            $this->assertIsBool(
+                $case->isExecutable(),
+                sprintf('Expected isExecutable() to return a boolean for case %s', $case->name)
+            );
         }
     }
 }
