@@ -17,10 +17,6 @@ class FileFilter implements FilterProvider
             type: FilterTypeEnum::NONE,
             children: [
                 new FilterItem(
-                    key: '.env',
-                    type: FilterTypeEnum::BLACKLIST,
-                ),
-                new FilterItem(
                     key: 'composer.lock',
                     type: FilterTypeEnum::BLACKLIST,
                 ),

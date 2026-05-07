@@ -338,6 +338,7 @@ STRING_SIMPLE=other_value # This is a string env var with a simple value
 #### Available targets
  All files will be created if they don't exist. There is no system check for this operation, as .env files are used in various types of projects, so it's up to you to make sure that you are adding entries to the right file for your project type and use case.
 
+- `EnvTargetEnum::DOT_ENV` - modifies the `.env` file. !BE CAREFULL WITH THE OVERWRITE FLAG HERE!
 - `EnvTargetEnum::DOT_DEV` - modifies the `.env.dev` file.
 - `EnvTargetEnum::DOT_EXAMPLE` - modifies the `.env.example` file.
 - `EnvTargetEnum::DOT_LOCAL` - modifies the `.env.local` file.
