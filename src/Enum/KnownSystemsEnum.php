@@ -14,6 +14,7 @@ enum KnownSystemsEnum: string
     case PHPSTORM = 'phpstorm';
     case SYMFONY = 'symfony';
     case VSCODE = 'vscode';
+    case KIRO = 'kiro';
 
 
     /**
@@ -29,6 +30,7 @@ enum KnownSystemsEnum: string
             self::PHPSTORM => [new SystemIndicator(SystemIndicatorTypeEnum::DIRECTORY, '/.idea'), new SystemIndicator(SystemIndicatorTypeEnum::ENV, 'IDE=phpstorm')],
             self::SYMFONY  => [new SystemIndicator(SystemIndicatorTypeEnum::FILE, '/config/bundles.php')],
             self::VSCODE   => [new SystemIndicator(SystemIndicatorTypeEnum::DIRECTORY, '/.vscode'), new SystemIndicator(SystemIndicatorTypeEnum::ENV, 'IDE=vscode')],
+            self::KIRO     => [new SystemIndicator(SystemIndicatorTypeEnum::DIRECTORY, '/.kiro')]
         };
     }
 

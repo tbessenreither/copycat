@@ -17,6 +17,9 @@ enum CopyTargetEnum: string
     case PUBLIC = 'public';
     case COPYCAT_CONFIG = '.copycat';
     case GIT_HOOKS = '.git/hooks';
+    case KIRO = '.kiro';
+    case KIRO_SKILLS = '.kiro/skills';
+    case KIRO_STEERING = '.kiro/steering';
 
     public function getSystem(): ?KnownSystemsEnum
     {
@@ -25,6 +28,7 @@ enum CopyTargetEnum: string
             self::PHPSTORM_RUN_CONFIG, self::PHPSTORM_EDITOR_IDEA                         => KnownSystemsEnum::PHPSTORM,
             self::SYMFONY_BIN, self::SYMFONY_CONFIG_PACKAGES, self::SYMFONY_CONFIG_ROUTES => KnownSystemsEnum::SYMFONY,
             self::GIT_HOOKS                                                               => KnownSystemsEnum::GIT,
+            self::KIRO, self::KIRO_SKILLS, self::KIRO_STEERING                            => KnownSystemsEnum::KIRO,
             default                                                                       => null,
         };
     }
