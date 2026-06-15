@@ -20,6 +20,12 @@ enum CopyTargetEnum: string
     case KIRO = '.kiro';
     case KIRO_SKILLS = '.kiro/skills';
     case KIRO_STEERING = '.kiro/steering';
+    case KIRO_HOOKS = '.kiro/hooks';
+    case AGENTIC = 'agentic';
+    case AGENTIC_MEMORY = 'agentic/memory';
+    case AGENTIC_MEMORY_SESSIONS = 'agentic/memory/sessions';
+    case AGENTIC_MEMORY_CONTEXT = 'agentic/memory/context';
+    case AGENTIC_ROADMAP = 'agentic/roadmap';
 
     public function getSystem(): ?KnownSystemsEnum
     {
@@ -28,7 +34,7 @@ enum CopyTargetEnum: string
             self::PHPSTORM_RUN_CONFIG, self::PHPSTORM_EDITOR_IDEA                         => KnownSystemsEnum::PHPSTORM,
             self::SYMFONY_BIN, self::SYMFONY_CONFIG_PACKAGES, self::SYMFONY_CONFIG_ROUTES => KnownSystemsEnum::SYMFONY,
             self::GIT_HOOKS                                                               => KnownSystemsEnum::GIT,
-            self::KIRO, self::KIRO_SKILLS, self::KIRO_STEERING                            => KnownSystemsEnum::KIRO,
+            self::KIRO, self::KIRO_SKILLS, self::KIRO_STEERING, self::KIRO_HOOKS          => KnownSystemsEnum::KIRO,
             default                                                                       => null,
         };
     }
