@@ -168,6 +168,7 @@ PHP Copycat finished.
 
 Table of operations
 - [copy](#copy)
+- [copyDirectory](#copydirectory)
 - [jsonAdd](#jsonadd)
 - [gitIgnoreAdd](#gitignoreadd)
 - [symfonyBundleAdd](#symfonybundleadd)
@@ -200,6 +201,24 @@ $copycat->copy(
 - `CopyTargetEnum::PUBLIC` - copies to the `public` directory of the project.
 - `CopyTargetEnum::COPYCAT_CONFIG` - copies files to the `.copycat` directory in the project root.
 - `CopyTargetEnum::GIT_HOOKS` - copies files to the `.git/hooks` directory in the project root.
+- `CopyTargetEnum::CLAUDE` - copies files or folders to the `.claude` directory.
+
+
+### copyDirectory
+
+Copies a whole directory to a given target. On removal only files present in the package will be removed from the project. Empty directories will be removed.
+
+```php
+
+$copycat->copyDirectory(
+    target: \Tbessenreither\Copycat\Enum\CopyTargetEnum::KIRO_SETTINGS,
+    source: 'src/sourceDir',
+    overwrite: true,
+    gitIgnore: false,
+    createTargetDirectory: true,
+);
+
+```
 
 ### jsonAdd
 
