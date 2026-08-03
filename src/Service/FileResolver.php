@@ -42,6 +42,34 @@ class FileResolver
         return $resolvedFile;
     }
 
+    public static function resolveDirectory(PackageInfo $packageInfo, string $directory, bool $enforceScope = true): string
+    {
+        $resolvedDirectory = null;
+        if (file_exists($directory) && is_dir($directory)) {
+            $resolvedDirectory = realpath($directory);
+        }
+
+        $relativePathPackage = $packageInfo->getPackagePath() . '/' . $directory;
+        if (file_exists($relativePathPackage) && is_dir($relativePathPackage)) {
+            $resolvedDirectory = realpath($relativePathPackage);
+        }
+
+        $relativePathAutoload = $packageInfo->getAutoloadPath() . '/' . $directory;
+        if (file_exists($relativePathAutoload) && is_dir($relativePathAutoload)) {
+            $resolvedDirectory = realpath($relativePathAutoload);
+        }
+
+        if ($resolvedDirectory === null) {
+            throw new InvalidArgumentException('Directory not found: ' . $directory);
+        }
+
+        if ($enforceScope === true && !str_starts_with($resolvedDirectory, $packageInfo->getPackagePath() . DIRECTORY_SEPARATOR)) {
+            throw new InvalidArgumentException('Cannot access directory outside of package scope: ' . $resolvedDirectory);
+        }
+
+        return $resolvedDirectory;
+    }
+
     public static function resolveInProject(PackageInfo $packageInfo, string $file, bool $createIfNotExists = false): string
     {
         $projectPath = $packageInfo->getProjectPath();

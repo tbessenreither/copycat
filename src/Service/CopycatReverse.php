@@ -45,6 +45,31 @@ class CopycatReverse extends CopycatBase implements CopycatInterface
         }
     }
 
+    public function copyDirectory(CopyTargetEnum $target, string $source, bool $overwrite = true, bool $gitIgnore = false, bool $createTargetDirectory = false): void
+    {
+        try {
+            echo '    - Removing directory ' . $source . ' from ' . $target->value . '' . PHP_EOL;
+            SystemValidator::validateSystem($this->packageInfo, $target->getSystem());
+
+            if ($gitIgnore) {
+                $this->gitIgnoreAdd($target->value . '/' . basename($source));
+            }
+
+            $sourceDir = FileResolver::resolveDirectory(
+                packageInfo: $this->packageInfo,
+                directory: $source,
+            );
+
+            FileCopy::removeDirectory(
+                sourceDirectory: $sourceDir,
+                destinationDirectory: $this->getTargetDir($target),
+            );
+
+        } catch (Throwable $e) {
+            $this->logError('copyDirectory', $e);
+        }
+    }
+
     public function jsonAdd(JsonTargetEnum $target, string $path, mixed $value, bool $overwrite = false): void
     {
         try {
