@@ -5,3 +5,4 @@ composer.lock
 .idea
 coverage/
 testscript.php
+.php-cs-fixer.cache
