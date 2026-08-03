@@ -29,6 +29,7 @@ enum CopyTargetEnum: string
     case AGENTIC_MEMORY_SESSIONS = 'agentic/memory/sessions';
     case AGENTIC_MEMORY_CONTEXT = 'agentic/memory/context';
     case AGENTIC_ROADMAP = 'agentic/roadmap';
+    case CLAUDE = '.claude';
 
     public function getSystem(): ?KnownSystemsEnum
     {
@@ -38,6 +39,7 @@ enum CopyTargetEnum: string
             self::SYMFONY_BIN, self::SYMFONY_CONFIG_PACKAGES, self::SYMFONY_CONFIG_ROUTES => KnownSystemsEnum::SYMFONY,
             self::GIT_HOOKS                                                               => KnownSystemsEnum::GIT,
             self::KIRO, self::KIRO_SKILLS, self::KIRO_STEERING, self::KIRO_HOOKS, self::KIRO_SPECS, self::KIRO_AGENTS, self::KIRO_SETTINGS => KnownSystemsEnum::KIRO,
+            self::CLAUDE                                                                  => KnownSystemsEnum::CLAUDE,
             default                                                                       => null,
         };
     }
