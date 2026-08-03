@@ -17,6 +17,8 @@ interface CopycatInterface
      */
     public function copy(CopyTargetEnum $target, string $file, bool $overwrite = true, bool $gitIgnore = false, bool $createTargetDirectory = false): void;
 
+    public function copyDirectory(CopyTargetEnum $target, string $source, bool $overwrite = true, bool $gitIgnore = false, bool $createTargetDirectory = false): void;
+
     public function jsonAdd(JsonTargetEnum $target, string $path, mixed $value, bool $overwrite = false): void;
 
     /**

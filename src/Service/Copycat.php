@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tbessenreither\Copycat\Service;
 
+use InvalidArgumentException;
 use Tbessenreither\Copycat\Dto\EnvVar;
 use Tbessenreither\Copycat\Enum\CopyTargetEnum;
 use Tbessenreither\Copycat\Enum\EnvTargetEnum;
@@ -39,7 +40,6 @@ class Copycat extends CopycatBase implements CopycatInterface
                 destinationDirectory: $this->getTargetDir($target),
                 overwrite: $overwrite,
                 createTargetDirectory: $createTargetDirectory,
-                executable: $target->isExecutable(),
             );
 
             if ($gitIgnore) {
@@ -52,6 +52,35 @@ class Copycat extends CopycatBase implements CopycatInterface
 
         } catch (Throwable $e) {
             $this->logError('copy', $e);
+        }
+    }
+
+    public function copyDirectory(CopyTargetEnum $target, string $source, bool $overwrite = true, bool $gitIgnore = false, bool $createTargetDirectory = false): void
+    {
+        try {
+            echo '    - copy directory ' . $source . ' to ' . $target->value . '' . PHP_EOL;
+            SystemValidator::validateSystem($this->packageInfo, $target->getSystem());
+
+            $sourceDir = FileResolver::resolveDirectory(
+                packageInfo: $this->packageInfo,
+                directory: $source,
+            );
+
+            if (!is_dir($sourceDir)) {
+                throw new InvalidArgumentException('Source directory does not exist: ' . $sourceDir);
+            }
+
+            $destinationDir = $this->getTargetDir($target);
+
+            FileCopy::copyDirectory(
+                sourceDirectory: $sourceDir,
+                destinationDirectory: $destinationDir,
+                overwrite: $overwrite,
+                createTargetDirectory: $createTargetDirectory,
+            );
+
+        } catch (Throwable $e) {
+            $this->logError('copyDirectory', $e);
         }
     }
 

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tbessenreither\Copycat\Modifier;
 
 use InvalidArgumentException;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 use RuntimeException;
 
 class FileCopy
@@ -54,6 +56,69 @@ class FileCopy
 
         if (!unlink($destination)) {
             throw new RuntimeException('Failed to remove file at ' . $destination);
+        }
+    }
+
+    public static function copyDirectory(string $sourceDirectory, string $destinationDirectory, bool $overwrite = true, bool $createTargetDirectory = false): void
+    {
+        if (!file_exists($sourceDirectory) || !is_dir($sourceDirectory)) {
+            throw new InvalidArgumentException('Source directory does not exist: ' . $sourceDirectory);
+        }
+
+        if ($createTargetDirectory) {
+            self::ensureDirectoryExists($destinationDirectory);
+        }
+
+        if (!file_exists($destinationDirectory) || !is_dir($destinationDirectory)) {
+            throw new InvalidArgumentException('Destination directory does not exist: ' . $destinationDirectory);
+        }
+
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($sourceDirectory, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+        foreach ($iterator as $item) {
+            $destPath = $destinationDirectory . DIRECTORY_SEPARATOR . $iterator->getSubPathName();
+            if ($item->isDir()) {
+                self::ensureDirectoryExists($destPath);
+            } else {
+                self::copy($item->getPathname(), dirname($destPath), $overwrite, $createTargetDirectory, false);
+            }
+        }
+    }
+
+    public static function removeDirectory(string $sourceDirectory, string $destinationDirectory): void
+    {
+        if (!file_exists($sourceDirectory) || !is_dir($sourceDirectory)) {
+            throw new InvalidArgumentException('Source directory does not exist: ' . $sourceDirectory);
+        }
+        if (!file_exists($destinationDirectory)) {
+            // Destination directory does not exist, nothing to remove
+            return;
+        }
+
+        // use iterator to get all files and directories that need to be removed
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($sourceDirectory, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        $checkEmptyDirectories = [];
+        foreach ($iterator as $item) {
+            $destPath = $destinationDirectory . DIRECTORY_SEPARATOR . $iterator->getSubPathName();
+            if ($item->isFile()) {
+                if (file_exists($destPath) && is_file($destPath)) {
+                    unlink($destPath);
+                }
+            } elseif ($item->isDir()) {
+                $checkEmptyDirectories[] = $destPath;
+            }
+        }
+
+        foreach (array_reverse($checkEmptyDirectories) as $dir) {
+            if (is_dir($dir) && count(scandir($dir)) === 2) {
+                rmdir($dir);
+            }
         }
     }
 
