@@ -13,7 +13,7 @@ use Tbessenreither\Copycat\Enum\KnownSystemsEnum;
 use Tbessenreither\Copycat\Interface\CopycatInterface;
 use Tbessenreither\Copycat\Modifier\EnvModifier;
 use Tbessenreither\Copycat\Modifier\FileCopy;
-use Tbessenreither\Copycat\Modifier\GitignoreModifier;
+use Tbessenreither\Copycat\Modifier\IgnoreFileModifier;
 use Tbessenreither\Copycat\Modifier\JsonModifier;
 use Tbessenreither\Copycat\Modifier\SymfonyModifier;
 use Throwable;
@@ -113,33 +113,63 @@ class Copycat extends CopycatBase implements CopycatInterface
 
     /**
      * Adds one or more entries to the .gitignore file in project root. If the .gitignore file does not exist, it will be created.
-     * @param string|string[] $entry
+     * @param string|string[] $entries
      * @return void
      */
     public function gitIgnoreAdd(string|array $entries): void
+    {
+        $this->ignoreFileAdd(
+            method: 'gitIgnoreAdd',
+            fileName: '.gitignore',
+            system: KnownSystemsEnum::GIT,
+            entries: $entries,
+        );
+    }
+
+    /**
+     * Adds one or more entries to the .dockerignore file in project root. If the .dockerignore file does not exist, it will be created.
+     * Only runs in projects that contain a Dockerfile.
+     * @param string|string[] $entries
+     * @return void
+     */
+    public function dockerIgnoreAdd(string|array $entries): void
+    {
+        $this->ignoreFileAdd(
+            method: 'dockerIgnoreAdd',
+            fileName: '.dockerignore',
+            system: KnownSystemsEnum::DOCKER,
+            entries: $entries,
+        );
+    }
+
+    /**
+     * @param string|string[] $entries
+     */
+    private function ignoreFileAdd(string $method, string $fileName, KnownSystemsEnum $system, string|array $entries): void
     {
         if (!is_array($entries)) {
             $entries = [$entries];
         }
         try {
-            echo "    - Adding " . count($entries) . " entries to .gitignore:" . PHP_EOL;
-            SystemValidator::validateSystem($this->packageInfo, KnownSystemsEnum::GIT);
+            echo "    - Adding " . count($entries) . " entries to " . $fileName . ":" . PHP_EOL;
+            SystemValidator::validateSystem($this->packageInfo, $system);
             $file = FileResolver::resolveInProject(
                 packageInfo: $this->packageInfo,
-                file: '.gitignore',
+                file: $fileName,
                 createIfNotExists: true,
             );
 
-            $modifiedContent = GitignoreModifier::add(
+            $modifiedContent = IgnoreFileModifier::add(
                 fileContent: FileResolver::loadFile($file),
                 entries: $entries,
                 groupName: $this->packageInfo->getNamespace(),
+                fileName: $fileName,
             );
 
             FileResolver::storeFileModification($file, $modifiedContent);
 
         } catch (Throwable $e) {
-            $this->logError('gitIgnoreAdd', $e);
+            $this->logError($method, $e);
         }
     }
 
@@ -235,7 +265,6 @@ class Copycat extends CopycatBase implements CopycatInterface
             FileResolver::storeFileModification($file, $modifiedContent);
 
         } catch (Throwable $e) {
-            var_dump($e);
             $this->logError('envAdd', $e);
         }
     }

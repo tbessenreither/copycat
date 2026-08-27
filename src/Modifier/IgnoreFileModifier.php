@@ -6,7 +6,7 @@ namespace Tbessenreither\Copycat\Modifier;
 
 use RuntimeException;
 
-class GitignoreModifier
+class IgnoreFileModifier
 {
     private const string GROUP_START = '###> ';
     public const string GROUP_END = '###< ';
@@ -14,7 +14,7 @@ class GitignoreModifier
     /**
      * @param string|string[] $entry
      */
-    public static function add(string $fileContent, array|string $entries, string $groupName): string
+    public static function add(string $fileContent, array|string $entries, string $groupName, string $fileName = '.gitignore'): string
     {
         $stats = ['added' => 0, 'skipped' => 0];
         if (!is_array($entries)) {
@@ -39,7 +39,7 @@ class GitignoreModifier
         }
 
         if ($groupIndexEnd === false) {
-            throw new RuntimeException('Group start found but group end not found in .gitignore for group: ' . $groupName);
+            throw new RuntimeException('Group start found but group end not found in ' . $fileName . ' for group: ' . $groupName);
         }
 
         // cut out the existing group entries
@@ -66,12 +66,12 @@ class GitignoreModifier
         // Ensure the file ends with a newline
         $lines[] = '';
 
-        echo "        Added " . $stats['added'] . " entries to .gitignore, skipped " . $stats['skipped'] . " entries that already existed." . PHP_EOL;
+        echo "        Added " . $stats['added'] . " entries to " . $fileName . ", skipped " . $stats['skipped'] . " entries that already existed." . PHP_EOL;
 
         return implode(PHP_EOL, $lines);
     }
 
-    public static function remove(string $fileContent, string $groupName): string
+    public static function remove(string $fileContent, string $groupName, string $fileName = '.gitignore'): string
     {
         ['start' => $groupStartString, 'end' => $groupEndString] = self::getGroupStartAndStopStrings($groupName);
 
@@ -79,7 +79,7 @@ class GitignoreModifier
         $groupIndexStart = array_search($groupStartString, $lines, true);
         $groupIndexEnd = array_search($groupEndString, $lines, true);
         if ($groupIndexStart === false || $groupIndexEnd === false) {
-            throw new RuntimeException('no valid group start and end found in .gitignore for group: ' . $groupName);
+            throw new RuntimeException('no valid group start and end found in ' . $fileName . ' for group: ' . $groupName);
         }
 
         // Remove the group lines

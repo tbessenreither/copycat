@@ -27,6 +27,13 @@ interface CopycatInterface
      */
     public function gitIgnoreAdd(string|array $entries): void;
 
+    /**
+     * Adds one or more entries to the .dockerignore file in project root. If the .dockerignore file does not exist, it will be created.
+     * Only runs in projects that contain a Dockerfile.
+     * @param string|string[] $entries
+     */
+    public function dockerIgnoreAdd(string|array $entries): void;
+
     public function symfonyBundleAdd(string $bundleClassName): void;
 
     public function symfonyAddServiceToYaml(

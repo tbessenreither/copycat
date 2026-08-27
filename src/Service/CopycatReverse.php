@@ -13,7 +13,7 @@ use Tbessenreither\Copycat\Enum\KnownSystemsEnum;
 use Tbessenreither\Copycat\Interface\CopycatInterface;
 use Tbessenreither\Copycat\Modifier\EnvModifier;
 use Tbessenreither\Copycat\Modifier\FileCopy;
-use Tbessenreither\Copycat\Modifier\GitignoreModifier;
+use Tbessenreither\Copycat\Modifier\IgnoreFileModifier;
 use Tbessenreither\Copycat\Modifier\JsonModifier;
 use Tbessenreither\Copycat\Modifier\SymfonyModifier;
 use Tbessenreither\Copycat\Modifier\YamlModifier;
@@ -100,32 +100,53 @@ class CopycatReverse extends CopycatBase implements CopycatInterface
 
     /**
      * Adds one or more entries to the .gitignore file in project root. If the .gitignore file does not exist, it will be created.
-     * @param string|string[] $entry
+     * @param string|string[] $entries
      * @return void
      */
     public function gitIgnoreAdd(string|array $entries): void
     {
-        if (!is_array($entries)) {
-            $entries = [$entries];
-        }
+        $this->ignoreFileRemove(
+            method: 'gitIgnoreAdd',
+            fileName: '.gitignore',
+            system: KnownSystemsEnum::GIT,
+        );
+    }
+
+    /**
+     * Removes this package's group from the .dockerignore file in project root.
+     * @param string|string[] $entries
+     * @return void
+     */
+    public function dockerIgnoreAdd(string|array $entries): void
+    {
+        $this->ignoreFileRemove(
+            method: 'dockerIgnoreAdd',
+            fileName: '.dockerignore',
+            system: KnownSystemsEnum::DOCKER,
+        );
+    }
+
+    private function ignoreFileRemove(string $method, string $fileName, KnownSystemsEnum $system): void
+    {
         try {
-            echo "    - Removing .gitignore entries:" . PHP_EOL;
-            SystemValidator::validateSystem($this->packageInfo, KnownSystemsEnum::GIT);
+            echo "    - Removing " . $fileName . " entries:" . PHP_EOL;
+            SystemValidator::validateSystem($this->packageInfo, $system);
             $file = FileResolver::resolveInProject(
                 packageInfo: $this->packageInfo,
-                file: '.gitignore',
+                file: $fileName,
                 createIfNotExists: true,
             );
 
-            $modifiedContent = GitignoreModifier::remove(
+            $modifiedContent = IgnoreFileModifier::remove(
                 fileContent: FileResolver::loadFile($file),
                 groupName: $this->packageInfo->getNamespace(),
+                fileName: $fileName,
             );
 
             FileResolver::storeFileModification($file, $modifiedContent);
 
         } catch (Throwable $e) {
-            $this->logError('gitIgnoreAdd', $e);
+            $this->logError($method, $e);
         }
     }
 
