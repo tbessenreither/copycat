@@ -16,6 +16,7 @@ enum KnownSystemsEnum: string
     case VSCODE = 'vscode';
     case KIRO = 'kiro';
     case CLAUDE = 'claude';
+    case DOCKER = 'docker';
 
 
     /**
@@ -33,6 +34,7 @@ enum KnownSystemsEnum: string
             self::VSCODE   => [new SystemIndicator(SystemIndicatorTypeEnum::DIRECTORY, '/.vscode'), new SystemIndicator(SystemIndicatorTypeEnum::ENV, 'IDE=vscode')],
             self::KIRO     => [new SystemIndicator(SystemIndicatorTypeEnum::DIRECTORY, '/.kiro')],
             self::CLAUDE   => [new SystemIndicator(SystemIndicatorTypeEnum::DIRECTORY, '/.claude')],
+            self::DOCKER   => [new SystemIndicator(SystemIndicatorTypeEnum::FILE, '/Dockerfile')],
         };
     }
 

@@ -18,6 +18,7 @@ Config files like the `composer.json` have additional protections to prevent mal
 - Copy files to specific targets (e.g., DDEV commands, Symfony, public, etc.)
 - Add or modify JSON values at any path in a target file
 - Add entries to your project's `.gitignore` in a grouped, idempotent way
+- Add entries to your project's `.dockerignore` in a grouped, idempotent way (only in projects with a `Dockerfile`)
 - Register Symfony bundles automatically in `config/bundles.php`
 - **Smart system validation:** Only runs operations if your project matches the expected system for the target (e.g., Symfony, DDEV)
 - Secure: prevents copying files from outside your package scope
@@ -34,10 +35,10 @@ PHP Copycat is actively developed. Planned features include:
 
 Legend: ✅ supported, 🔨 working on it, 🔴 not supported
 
-|            | copy | jsonAdd | gitIgnoreAdd | symfonyBundleAdd | symfonyServiceYaml | envAdd |
-|------------|------|---------|--------------|------------------|--------------------|--------|
-| Write      | ✅   | ✅      | ✅           | ✅               | ✅                 | ✅     |
-| Revert     | ✅   | ✅      | ✅           | ✅               | ✅                 | ✅     |
+|            | copy | jsonAdd | gitIgnoreAdd | dockerIgnoreAdd | symfonyBundleAdd | symfonyServiceYaml | envAdd |
+|------------|------|---------|--------------|-----------------|------------------|--------------------|--------|
+| Write      | ✅   | ✅      | ✅           | ✅              | ✅               | ✅                 | ✅     |
+| Revert     | ✅   | ✅      | ✅           | ✅              | ✅               | ✅                 | ✅     |
 
 
 ---
@@ -171,6 +172,7 @@ Table of operations
 - [copyDirectory](#copydirectory)
 - [jsonAdd](#jsonadd)
 - [gitIgnoreAdd](#gitignoreadd)
+- [dockerIgnoreAdd](#dockerignoreadd)
 - [symfonyBundleAdd](#symfonybundleadd)
 - [symfonyAddServiceToYaml](#symfonyaddservicetoyaml)
 - [envAdd](#envadd)
@@ -249,6 +251,21 @@ $copycat->gitIgnoreAdd(
     entries: [ # this can also be a string if you want to add just a single entry
         'ignored-file.txt',
         'ignored-directory/*',
+    ],
+);
+```
+
+### dockerIgnoreAdd
+
+Add entries to the project's `.dockerignore` file grouped by package namespace, exactly like `gitIgnoreAdd`. The operation will only be executed if the project contains a `Dockerfile`, and the file is created if it does not exist yet.
+
+Because the entries live in their own `###> namespace` group, a project keeps its own patterns — use this instead of copying a whole `.dockerignore` over the project's file.
+
+```php
+$copycat->dockerIgnoreAdd(
+    entries: [ # this can also be a string if you want to add just a single entry
+        'tests/',
+        '.github/',
     ],
 );
 ```
