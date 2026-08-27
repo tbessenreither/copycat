@@ -265,7 +265,6 @@ class Copycat extends CopycatBase implements CopycatInterface
             FileResolver::storeFileModification($file, $modifiedContent);
 
         } catch (Throwable $e) {
-            var_dump($e);
             $this->logError('envAdd', $e);
         }
     }
