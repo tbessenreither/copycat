@@ -10,7 +10,7 @@ use Tbessenreither\Copycat\Modifier\IgnoreFileModifier;
 use Tbessenreither\Copycat\Tests\TestCase;
 
 #[CoversClass(IgnoreFileModifier::class)]
-class GitignoreModifierTest extends TestCase
+class IgnorefileModifierTest extends TestCase
 {
     public function testAddCreatesNamespacedGroupAndKeepsExistingContent(): void
     {
