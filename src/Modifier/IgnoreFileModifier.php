@@ -6,7 +6,7 @@ namespace Tbessenreither\Copycat\Modifier;
 
 use RuntimeException;
 
-class GitignoreModifier
+class IgnoreFileModifier
 {
     private const string GROUP_START = '###> ';
     public const string GROUP_END = '###< ';

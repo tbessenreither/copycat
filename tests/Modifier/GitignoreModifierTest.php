@@ -6,16 +6,16 @@ namespace Tbessenreither\Copycat\Tests\Modifier;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use RuntimeException;
-use Tbessenreither\Copycat\Modifier\GitignoreModifier;
+use Tbessenreither\Copycat\Modifier\IgnoreFileModifier;
 use Tbessenreither\Copycat\Tests\TestCase;
 
-#[CoversClass(GitignoreModifier::class)]
+#[CoversClass(IgnoreFileModifier::class)]
 class GitignoreModifierTest extends TestCase
 {
     public function testAddCreatesNamespacedGroupAndKeepsExistingContent(): void
     {
         ob_start();
-        $modified = GitignoreModifier::add(
+        $modified = IgnoreFileModifier::add(
             fileContent: '.git/' . PHP_EOL,
             entries: ['tests/', '.github/'],
             groupName: 'testgroup',
@@ -35,13 +35,13 @@ class GitignoreModifierTest extends TestCase
     public function testAddSkipsEntriesAlreadyPresentInTheGroup(): void
     {
         ob_start();
-        $once = GitignoreModifier::add(
+        $once = IgnoreFileModifier::add(
             fileContent: '',
             entries: ['tests/'],
             groupName: 'testgroup',
             fileName: '.dockerignore',
         );
-        $twice = GitignoreModifier::add(
+        $twice = IgnoreFileModifier::add(
             fileContent: $once,
             entries: ['tests/'],
             groupName: 'testgroup',
@@ -57,7 +57,7 @@ class GitignoreModifierTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('no valid group start and end found in .dockerignore for group: testgroup');
 
-        GitignoreModifier::remove(
+        IgnoreFileModifier::remove(
             fileContent: 'tests/',
             groupName: 'testgroup',
             fileName: '.dockerignore',

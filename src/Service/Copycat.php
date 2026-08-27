@@ -13,7 +13,7 @@ use Tbessenreither\Copycat\Enum\KnownSystemsEnum;
 use Tbessenreither\Copycat\Interface\CopycatInterface;
 use Tbessenreither\Copycat\Modifier\EnvModifier;
 use Tbessenreither\Copycat\Modifier\FileCopy;
-use Tbessenreither\Copycat\Modifier\GitignoreModifier;
+use Tbessenreither\Copycat\Modifier\IgnoreFileModifier;
 use Tbessenreither\Copycat\Modifier\JsonModifier;
 use Tbessenreither\Copycat\Modifier\SymfonyModifier;
 use Throwable;
@@ -159,7 +159,7 @@ class Copycat extends CopycatBase implements CopycatInterface
                 createIfNotExists: true,
             );
 
-            $modifiedContent = GitignoreModifier::add(
+            $modifiedContent = IgnoreFileModifier::add(
                 fileContent: FileResolver::loadFile($file),
                 entries: $entries,
                 groupName: $this->packageInfo->getNamespace(),
