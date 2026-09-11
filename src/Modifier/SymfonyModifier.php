@@ -6,6 +6,7 @@ namespace Tbessenreither\Copycat\Modifier;
 
 use ReflectionClass;
 use RuntimeException;
+use Tbessenreither\Copycat\Service\ConsoleOutput;
 
 class SymfonyModifier
 {
@@ -35,7 +36,8 @@ class SymfonyModifier
 
         $bundleLine = $indentation . $bundleClassName . "::class => ['all' => true],";
         if (in_array($bundleLine, $lines, true)) {
-            throw new RuntimeException('Bundle ' . $bundleClassName . ' is already registered in bundles.php, skipping.');
+            ConsoleOutput::debug('Bundle ' . $bundleClassName . ' is already registered in bundles.php, skipping.', 1);
+            return $fileContent;
         }
 
 

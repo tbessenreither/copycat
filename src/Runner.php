@@ -9,6 +9,7 @@ use Composer\Installer\PackageEvent;
 use Composer\Script\Event;
 use ReflectionClass;
 use Tbessenreither\Copycat\Interface\CopycatConfigInterface;
+use Tbessenreither\Copycat\Service\ConsoleOutput;
 use Tbessenreither\Copycat\Service\Copycat;
 use Tbessenreither\Copycat\Service\CopycatReverse;
 use Tbessenreither\Copycat\Service\FileResolver;
@@ -18,10 +19,7 @@ class Runner
 {
     public static function run(Event|PackageEvent $event): void
     {
-        echo str_repeat(PHP_EOL, 2) . "\033[32m";
-        echo "==========================================" . PHP_EOL;
-        echo "          Running PHP Copycat..." . PHP_EOL;
-        echo "==========================================" . "\033[0m" . PHP_EOL;
+        ConsoleOutput::success("Running PHP Copycat...", 0);
         if ($event instanceof Event) {
             self::onInstallOrUpdate();
         } elseif ($event instanceof PackageEvent) {
@@ -29,13 +27,13 @@ class Runner
                 if ($operation->getOperationType() === 'uninstall') {
                     self::onUninstall($operation);
                 } else {
-                    echo "Operation type " . $operation->getOperationType() . " not supported." . PHP_EOL;
+                    ConsoleOutput::warning("Operation type " . $operation->getOperationType() . " not supported.", 0);
                 }
             }
         }
         FileResolver::writeBufferedFilesToDisk();
-        echo PHP_EOL . "\033[32m" . "PHP Copycat finished." . "\033[0m" . PHP_EOL;
-        echo str_repeat(PHP_EOL, 2);
+        ConsoleOutput::newline();
+        ConsoleOutput::success("PHP Copycat finished.");
     }
 
     private static function onUninstall(OperationInterface $operation): void
@@ -44,7 +42,7 @@ class Runner
         //get string between <info> and </info>
         preg_match('/<info>(.*?)<\/info>/', $packageInfoString, $matches);
         if (count($matches) < 2) {
-            echo "Could not extract package info from string: " . $packageInfoString . PHP_EOL;
+            ConsoleOutput::warning("Could not extract package info from string: " . $packageInfoString);
 
             return;
         }
@@ -61,7 +59,7 @@ class Runner
             }
         }
         if ($packageInfo === null) {
-            echo "Could not find affected namespace for package: " . $packageInfoStringCleaned . PHP_EOL;
+            ConsoleOutput::debug("Could not find affected namespace for package: " . $packageInfoStringCleaned);
 
             return;
         }
@@ -72,19 +70,19 @@ class Runner
         $copycatClass = $packageInfo->getNamespace() . '\\CopycatConfig';
 
         if (!class_exists($copycatClass)) {
-            echo "No CopycatConfig class found for namespace " . $packageInfo->getNamespace() . ", skipping uninstall operations." . PHP_EOL;
+            ConsoleOutput::debug("No CopycatConfig class found for namespace " . $packageInfo->getNamespace() . ", skipping uninstall operations.");
 
             return;
         }
 
         $reflectionClass = new ReflectionClass($copycatClass);
         if (!$reflectionClass->implementsInterface(CopycatConfigInterface::class)) {
-            echo "CopycatConfig class for namespace " . $packageInfo->getNamespace() . " does not implement CopycatConfigInterface, skipping uninstall operations." . PHP_EOL;
+            ConsoleOutput::warning("CopycatConfig class for namespace " . $packageInfo->getNamespace() . " does not implement CopycatConfigInterface, skipping uninstall operations.");
 
             return;
         }
 
-        echo "Reverting copycat for namespace " . $packageInfo->getNamespace() . PHP_EOL;
+        ConsoleOutput::heading('📦  Reverting ' . $packageInfo->getNamespace());
         $copycatClass::run($copycatInstance);
     }
 
@@ -108,8 +106,8 @@ class Runner
                 continue;
             }
 
-            echo "\n\033[34m";
-            echo "Running copycat for namespace " . $packageInfo->getNamespace() . "\033[0m" . PHP_EOL;
+            ConsoleOutput::heading('📦  ' . $packageInfo->getNamespace());
+            /** @var CopycatConfigInterface $copycatClass */
             $copycatClass::run($copycatInstance);
         }
     }

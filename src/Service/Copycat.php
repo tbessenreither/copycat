@@ -10,6 +10,7 @@ use Tbessenreither\Copycat\Enum\CopyTargetEnum;
 use Tbessenreither\Copycat\Enum\EnvTargetEnum;
 use Tbessenreither\Copycat\Enum\JsonTargetEnum;
 use Tbessenreither\Copycat\Enum\KnownSystemsEnum;
+use Tbessenreither\Copycat\Exception\SystemCheckFailedException;
 use Tbessenreither\Copycat\Interface\CopycatInterface;
 use Tbessenreither\Copycat\Modifier\EnvModifier;
 use Tbessenreither\Copycat\Modifier\FileCopy;
@@ -27,7 +28,7 @@ class Copycat extends CopycatBase implements CopycatInterface
     public function copy(CopyTargetEnum $target, string $file, bool $overwrite = true, bool $gitIgnore = false, bool $createTargetDirectory = false): void
     {
         try {
-            echo '    - copy ' . $file . ' to ' . $target->value . '' . PHP_EOL;
+            ConsoleOutput::debug(sprintf("• Check file copy %s to %s/ ...", basename($file), $target->value), 1);
             SystemValidator::validateSystem($this->packageInfo, $target->getSystem());
 
             $file = FileResolver::resolve(
@@ -50,15 +51,17 @@ class Copycat extends CopycatBase implements CopycatInterface
                 $this->gitIgnoreAdd($gitignoreValue);
             }
 
+        } catch (SystemCheckFailedException $e) {
+            ConsoleOutput::verbose($e->getMessage(), 2);
         } catch (Throwable $e) {
-            $this->logError('copy', $e);
+            ConsoleOutput::error($e->getMessage(), 2);
         }
     }
 
     public function copyDirectory(CopyTargetEnum $target, string $source, bool $overwrite = true, bool $gitIgnore = false, bool $createTargetDirectory = false): void
     {
         try {
-            echo '    - copy directory ' . $source . ' to ' . $target->value . '' . PHP_EOL;
+            ConsoleOutput::debug(sprintf("• Copy directory %s to %s/ ...", basename($source), $target->value), 1);
             SystemValidator::validateSystem($this->packageInfo, $target->getSystem());
 
             $sourceDir = FileResolver::resolveDirectory(
@@ -87,7 +90,7 @@ class Copycat extends CopycatBase implements CopycatInterface
     public function jsonAdd(JsonTargetEnum $target, string $path, mixed $value, bool $overwrite = false): void
     {
         try {
-            echo "    - Adding value to " . $target->value . " at path " . $path . PHP_EOL;
+            ConsoleOutput::verbose(sprintf("• Adding value to %s at path %s", $target->value, $path), 1);
 
             JsonModifier::securityChecks(target: $target, path: $path);
             SystemValidator::validateSystem($this->packageInfo, $target->getSystem());
@@ -151,7 +154,7 @@ class Copycat extends CopycatBase implements CopycatInterface
             $entries = [$entries];
         }
         try {
-            echo "    - Adding " . count($entries) . " entries to " . $fileName . ":" . PHP_EOL;
+            ConsoleOutput::verbose(sprintf("• Checking %s lines for %s", count($entries), $fileName), 1);
             SystemValidator::validateSystem($this->packageInfo, $system);
             $file = FileResolver::resolveInProject(
                 packageInfo: $this->packageInfo,
@@ -176,7 +179,7 @@ class Copycat extends CopycatBase implements CopycatInterface
     public function symfonyBundleAdd(string $bundleClassName): void
     {
         try {
-            echo "    - Adding $bundleClassName to symfony bundles.php." . PHP_EOL;
+            ConsoleOutput::verbose(sprintf("• Adding %s to symfony bundles.php", $bundleClassName), 1);
             SystemValidator::validateSystem($this->packageInfo, KnownSystemsEnum::SYMFONY);
 
             $file = FileResolver::resolveInProject(
@@ -192,7 +195,7 @@ class Copycat extends CopycatBase implements CopycatInterface
             FileResolver::storeFileModification($file, $modifiedContent);
 
         } catch (Throwable $e) {
-            $this->logError('symfonyBundleAdd', $e);
+            $this->logError(__METHOD__, $e);
         }
     }
 
@@ -204,7 +207,7 @@ class Copycat extends CopycatBase implements CopycatInterface
         ?array $tags = null,
     ): void {
         try {
-            echo "    - Adding service $serviceClass to symfony services.yaml." . PHP_EOL;
+            ConsoleOutput::verbose(sprintf("• Adding service %s to symfony services.yaml", $serviceClass), 1);
             SystemValidator::validateSystem($this->packageInfo, KnownSystemsEnum::SYMFONY);
 
             $file = FileResolver::resolveInProject(
@@ -224,7 +227,7 @@ class Copycat extends CopycatBase implements CopycatInterface
             FileResolver::storeFileModification($file, $modifiedContent);
 
         } catch (Throwable $e) {
-            $this->logError('symfonyAddServiceToYaml', $e);
+            $this->logError(__METHOD__, $e);
         }
     }
 
@@ -233,9 +236,6 @@ class Copycat extends CopycatBase implements CopycatInterface
      */
     public function envAdd(EnvTargetEnum $target, array $entries, bool $overwrite = false): void
     {
-        if (!is_array($entries)) {
-            $entries = [$entries];
-        }
         foreach ($entries as $key => $entry) {
             if (!$entry instanceof EnvVar) {
                 $entries[$key] = new EnvVar(
@@ -247,7 +247,7 @@ class Copycat extends CopycatBase implements CopycatInterface
         $entries = array_values($entries); // reindex numerically for the modifier
 
         try {
-            echo "    - Adding " . count($entries) . " entries to " . $target->value . ":" . PHP_EOL;
+            ConsoleOutput::verbose(sprintf("• Checking %s Environment Variables for %s", count($entries), $target->value), 1);
             SystemValidator::validateSystem($this->packageInfo, $target->getSystem());
             $file = FileResolver::resolveInProject(
                 packageInfo: $this->packageInfo,
@@ -265,7 +265,7 @@ class Copycat extends CopycatBase implements CopycatInterface
             FileResolver::storeFileModification($file, $modifiedContent);
 
         } catch (Throwable $e) {
-            $this->logError('envAdd', $e);
+            $this->logError(__METHOD__, $e);
         }
     }
 

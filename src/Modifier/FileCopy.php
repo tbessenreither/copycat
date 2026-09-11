@@ -8,6 +8,8 @@ use InvalidArgumentException;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RuntimeException;
+use Tbessenreither\Copycat\Service\ConsoleOutput;
+use Tbessenreither\Copycat\Service\FileResolver;
 
 class FileCopy
 {
@@ -28,12 +30,15 @@ class FileCopy
         $destination = rtrim($destinationDirectory, '/') . '/' . basename($source);
 
         if (!$overwrite && file_exists($destination)) {
-            throw new RuntimeException('Destination file already exists: ' . $destination);
+            ConsoleOutput::debug(sprintf("Destination file already exists: %s", $destination), 1);
+            return;
         }
 
         if (!copy($source, $destination)) {
             throw new RuntimeException('Failed to copy file from ' . $source . ' to ' . $destination);
         }
+
+        ConsoleOutput::info(sprintf("<dim>+ created</dim> %s", FileResolver::humanizeFilePath($destination)), 1);
 
         if ($executable) {
             if (!chmod($destination, 0755)) {

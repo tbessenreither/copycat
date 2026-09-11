@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use Tbessenreither\Copycat\Config\FileFilter;
 use Tbessenreither\Copycat\Dto\FilterItem;
 use Tbessenreither\Copycat\Enum\FilterTypeEnum;
+use Tbessenreither\Copycat\Service\ConsoleOutput;
 use Tbessenreither\Copycat\Service\FileResolver;
 use Tbessenreither\Copycat\Service\FilterService;
 use Tbessenreither\Copycat\Tests\TestCase;
@@ -19,6 +20,7 @@ use Tbessenreither\Copycat\Tests\TestCase;
 #[UsesClass(FilterTypeEnum::class)]
 #[UsesClass(FilterService::class)]
 #[UsesClass(FileFilter::class)]
+#[UsesClass(ConsoleOutput::class)]
 class FileResolverTest extends TestCase
 {
     public function testLoadNonExistingFile(): void

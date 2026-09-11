@@ -7,6 +7,7 @@ namespace Tbessenreither\Copycat\Modifier;
 use InvalidArgumentException;
 use RuntimeException;
 use Tbessenreither\Copycat\Enum\JsonTargetEnum;
+use Tbessenreither\Copycat\Service\ConsoleOutput;
 
 class JsonModifier
 {
@@ -51,7 +52,8 @@ class JsonModifier
             $current !== null && $current !== []
             && !$overwrite
         ) {
-            throw new RuntimeException('Cannot add value at path "' . $path . '" because there is already a value at that path and overwrite is set to false.');
+            ConsoleOutput::debug(sprintf("Cannot add value at path %s because there is already a value at that path and overwrite is set to false.", $path), 1);
+            return $fileContent;
         }
 
         $current = $value;
@@ -84,7 +86,7 @@ class JsonModifier
             throw new RuntimeException('No entry found at path "' . $path . '", skipping.');
         }
 
-        echo "        Removing entry at path " . $path . "." . PHP_EOL;
+        ConsoleOutput::debug(sprintf("Removing entry at path %s", $path), 1);
         unset($current[$lastKey]);
 
         $fileContentModified = json_encode($jsonData, JSON_PRETTY_PRINT + JSON_UNESCAPED_SLASHES);

@@ -165,6 +165,63 @@ Writing buffered file modifications to disk...
 PHP Copycat finished.
 ```
 
+## Verbosity
+
+Copycat filters its CLI output by a verbosity level. By default (`NORMAL`) you see errors, warnings, progress messages, and section headers. Raise the level to reveal per-file detail, or lower it to suppress everything except errors.
+
+### Levels
+
+| Level     | Value | Shows                                                                                                       |
+|-----------|-------|-------------------------------------------------------------------------------------------------------------|
+| `SILENT`  | `0`   | Errors only.                                                                                                |
+| `NORMAL`  | `1`   | + warnings, progress messages, section headers _(default)_.                                                 |
+| `VERBOSE` | `2`   | + per-file detail such as `Loading file: …`, `Storing modifications for: …`, `Writing file to disk: …`.     |
+| `DEBUG`   | `3`   | + deep trace output.                                                                                        |
+
+Set the level via the `COPYCAT_VERBOSITY` environment variable. Both the level name and its numeric value are accepted (names are case-insensitive):
+
+```bash
+COPYCAT_VERBOSITY=verbose composer install
+COPYCAT_VERBOSITY=2 composer update
+```
+
+To make it stick across every run, export it from your shell profile (`~/.bashrc`, `~/.zshrc`, …):
+
+```bash
+export COPYCAT_VERBOSITY=verbose
+```
+
+### Containerized setups
+
+When Composer runs inside a container, `COPYCAT_VERBOSITY` has to be set _inside that container_, not on the host — otherwise Copycat never sees it. Setting the variable on the host in front of a wrapper command (e.g. `COPYCAT_VERBOSITY=3 ddev composer install`) does **not** work: it applies only to the host process and is not forwarded into the container.
+
+Use whichever env-passthrough mechanism your runtime provides. A few concrete examples:
+
+- **DDEV**, one-off:
+
+  ```bash
+  ddev exec COPYCAT_VERBOSITY=3 composer install
+  ```
+
+  Persistent for the project — add it to `.ddev/config.yaml` and `ddev restart`:
+
+  ```yaml
+  web_environment:
+      - COPYCAT_VERBOSITY=verbose
+  ```
+
+- **Docker Compose**, one-off:
+
+  ```bash
+  docker compose exec -e COPYCAT_VERBOSITY=3 app composer install
+  ```
+
+- **Plain `docker run`**:
+
+  ```bash
+  docker run --rm -e COPYCAT_VERBOSITY=3 -v "$PWD:/app" -w /app composer:2 install
+  ```
+
 ## Available Operations
 
 Table of operations

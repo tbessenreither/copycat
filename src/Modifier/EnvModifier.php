@@ -6,6 +6,7 @@ namespace Tbessenreither\Copycat\Modifier;
 
 use RuntimeException;
 use Tbessenreither\Copycat\Dto\EnvVar;
+use Tbessenreither\Copycat\Service\ConsoleOutput;
 
 class EnvModifier
 {
@@ -48,17 +49,17 @@ class EnvModifier
         foreach ($entries as $envVar) {
             $entrySearchKey = $envVar->getName() . '=';
 
-            // first we cleanup anny grouping issues by moving any existing entries with the same key into the group, so that we can handle them properly with the overwrite flag
+            // first we clean up any grouping issues by moving any existing entries with the same key into the group, so that we can handle them properly with the overwrite flag
             foreach ($linesBeforeGroup as $lineKey => $line) {
                 if (str_starts_with($line, $entrySearchKey)) {
-                    echo "        Entry with key " . $envVar->getName() . " already exists, moving to group." . PHP_EOL;
+                    ConsoleOutput::debug(sprintf("Moving %s into group", $envVar->getName()), 2);
                     $groupLines[] = $line;
                     unset($linesBeforeGroup[$lineKey]);
                 }
             }
             foreach ($linesAfterGroup as $lineKey => $line) {
                 if (str_starts_with($line, $entrySearchKey)) {
-                    echo "        Entry with key " . $envVar->getName() . " already exists, moving to group." . PHP_EOL;
+                    ConsoleOutput::debug(sprintf("Moving %s into group", $envVar->getName()), 2);
                     $groupLines[] = $line;
                     unset($linesAfterGroup[$lineKey]);
                 }
@@ -69,10 +70,10 @@ class EnvModifier
             foreach ($groupLines as $lineKey => $line) {
                 if (str_starts_with($line, $entrySearchKey)) {
                     if ($overwrite) {
-                        echo "        Entry with key " . $envVar->getName() . " already exists in group, overwriting." . PHP_EOL;
+                        ConsoleOutput::info(sprintf("<dim>↻ replaced ENV</dim> %s", $envVar->getName()), 1);
                         unset($groupLines[$lineKey]);
                     } else {
-                        echo "        Entry with key " . $envVar->getName() . " already exists in group, skipping." . PHP_EOL;
+                        ConsoleOutput::verbose(sprintf("<dim>⏭ skipped ENV</dim> %s", $envVar->getName()), 1);
                         $entryExists = true;
                     }
                 }
@@ -100,7 +101,7 @@ class EnvModifier
         // Ensure the file ends with a newline
         $lines[] = '';
 
-        echo "        Added " . $stats['added'] . " entries and skipped " . $stats['skipped'] . "." . PHP_EOL;
+        ConsoleOutput::debug(sprintf("Added %d entries and skipped %d.", $stats['added'], $stats['skipped']), 2);
 
         return implode(PHP_EOL, $lines);
     }

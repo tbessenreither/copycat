@@ -7,11 +7,15 @@ namespace Tbessenreither\Copycat\Tests\Modifier;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use Tbessenreither\Copycat\Dto\EnvVar;
+use Tbessenreither\Copycat\Enum\VerbosityEnum;
 use Tbessenreither\Copycat\Modifier\EnvModifier;
+use Tbessenreither\Copycat\Service\ConsoleOutput;
 use Tbessenreither\Copycat\Tests\TestCase;
 
 #[CoversClass(EnvModifier::class)]
 #[UsesClass(EnvVar::class)]
+#[UsesClass(ConsoleOutput::class)]
+#[UsesClass(VerbosityEnum::class)]
 class EnvModifierTest extends TestCase
 {
     private EnvModifier $envModifier;

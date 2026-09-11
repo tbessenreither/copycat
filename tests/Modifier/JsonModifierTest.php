@@ -6,11 +6,14 @@ namespace Tbessenreither\Copycat\Tests\Modifier;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use Tbessenreither\Copycat\Modifier\JsonModifier;
+use Tbessenreither\Copycat\Service\ConsoleOutput;
 use Tbessenreither\Copycat\Tests\TestCase;
 use Throwable;
 
 #[CoversClass(JsonModifier::class)]
+#[UsesClass(ConsoleOutput::class)]
 class JsonModifierTest extends TestCase
 {
     private JsonModifier $jsonModifier;
@@ -144,7 +147,7 @@ class JsonModifierTest extends TestCase
                 'value' => 'newValue',
                 'overwrite' => false,
                 'expected' => '{"existingKey":"existingValue"}',
-                'expectException' => 'Cannot add value at path "existingKey" because there is already a ',
+                'expectException' => false,
             ],
             [
                 'fileContent' => '{"existingKey":"existingValue"}',
@@ -168,7 +171,7 @@ class JsonModifierTest extends TestCase
                 'value' => 'newValue',
                 'overwrite' => false,
                 'expected' => '{"nested":{"key":"value"}}',
-                'expectException' => 'Cannot add value at path "nested.key" because there is already a value',
+                'expectException' => false,
             ],
             [
                 'fileContent' => '{"nested":{"key":"value"}}',

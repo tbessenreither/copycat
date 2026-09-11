@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace Tbessenreither\Copycat\Tests\Modifier;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use RuntimeException;
 use Tbessenreither\Copycat\Modifier\IgnoreFileModifier;
+use Tbessenreither\Copycat\Service\ConsoleOutput;
 use Tbessenreither\Copycat\Tests\TestCase;
 
 #[CoversClass(IgnoreFileModifier::class)]
+#[UsesClass(ConsoleOutput::class)]
 class IgnorefileModifierTest extends TestCase
 {
     public function testAddCreatesNamespacedGroupAndKeepsExistingContent(): void

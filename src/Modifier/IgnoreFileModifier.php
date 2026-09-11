@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tbessenreither\Copycat\Modifier;
 
 use RuntimeException;
+use Tbessenreither\Copycat\Service\ConsoleOutput;
 
 class IgnoreFileModifier
 {
@@ -51,8 +52,10 @@ class IgnoreFileModifier
             if (!in_array($entry, $groupLines, true)) {
                 $groupLines[] = $entry;
                 $stats['added']++;
+                ConsoleOutput::info(sprintf("<dim>• ignored</dim> %s", $entry), 1);
             } else {
-                $stats['skipped']++;
+                // Skipped
+                ConsoleOutput::debug(sprintf("<dim>⏭ skipped ignore</dim> %s", $entry), 1);
             }
         }
 
@@ -66,7 +69,7 @@ class IgnoreFileModifier
         // Ensure the file ends with a newline
         $lines[] = '';
 
-        echo "        Added " . $stats['added'] . " entries to " . $fileName . ", skipped " . $stats['skipped'] . " entries that already existed." . PHP_EOL;
+        ConsoleOutput::debug(sprintf("Added %d entries and skipped %d.", $stats['added'], $stats['skipped']), 2);
 
         return implode(PHP_EOL, $lines);
     }

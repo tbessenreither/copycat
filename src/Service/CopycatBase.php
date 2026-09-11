@@ -21,7 +21,11 @@ abstract class CopycatBase
 
     protected function logError(string $method, Throwable $e): void
     {
-        echo '        ' . $method . " Error - " . $e->getMessage() . PHP_EOL;
+        if(ConsoleOutput::isDebug()) {
+            ConsoleOutput::debug(sprintf("Method %s Error! - %s", $method, $e->getMessage()), 2);
+        } else {
+            ConsoleOutput::warning($e->getMessage(), 2);
+        }
     }
 
     protected function getTargetDir(CopyTargetEnum $target): string
