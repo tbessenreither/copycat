@@ -13,11 +13,20 @@ class IgnoreFileModifier
     public const string GROUP_END = '###< ';
 
     /**
-     * @param string|string[] $entry
+     * Add the given entries to the namespaced group inside `$fileContent`.
+     *
+     * Returns the modified content alongside a per-entry breakdown so the caller
+     * can render a grouped, file-scoped summary. The modifier itself no longer
+     * emits user-facing output — only DEBUG plumbing lines.
+     *
+     * @param string|string[] $entries
+     *
+     * @return array{content: string, added: string[], skipped: string[]}
      */
-    public static function add(string $fileContent, array|string $entries, string $groupName, string $fileName = '.gitignore'): string
+    public static function add(string $fileContent, array|string $entries, string $groupName, string $fileName = '.gitignore'): array
     {
-        $stats = ['added' => 0, 'skipped' => 0];
+        $added = [];
+        $skipped = [];
         if (!is_array($entries)) {
             $entries = [$entries];
         }
@@ -51,11 +60,9 @@ class IgnoreFileModifier
         foreach ($entries as $entry) {
             if (!in_array($entry, $groupLines, true)) {
                 $groupLines[] = $entry;
-                $stats['added']++;
-                ConsoleOutput::info(sprintf("<dim>• ignored</dim> %s", $entry), 1);
+                $added[] = $entry;
             } else {
-                // Skipped
-                ConsoleOutput::debug(sprintf("<dim>⏭ skipped ignore</dim> %s", $entry), 1);
+                $skipped[] = $entry;
             }
         }
 
@@ -69,9 +76,16 @@ class IgnoreFileModifier
         // Ensure the file ends with a newline
         $lines[] = '';
 
-        ConsoleOutput::debug(sprintf("Added %d entries and skipped %d.", $stats['added'], $stats['skipped']), 2);
+        ConsoleOutput::debug(
+            sprintf('Ignore group "%s" in %s: %d added, %d skipped.', $groupName, $fileName, count($added), count($skipped)),
+            2,
+        );
 
-        return implode(PHP_EOL, $lines);
+        return [
+            'content' => implode(PHP_EOL, $lines),
+            'added' => $added,
+            'skipped' => $skipped,
+        ];
     }
 
     public static function remove(string $fileContent, string $groupName, string $fileName = '.gitignore'): string

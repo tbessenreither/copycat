@@ -11,7 +11,16 @@ use Tbessenreither\Copycat\Service\ConsoleOutput;
 
 class JsonModifier
 {
-    public static function add(string $fileContent, string $path, mixed $value, bool $overwrite = false): string
+    /**
+     * Add or overwrite the given `$value` at `$path` inside the JSON blob.
+     *
+     * Returns the modified content plus a boolean flag telling the caller
+     * whether the JSON was actually changed. `changed=false` means the target
+     * path already had a value and `$overwrite` was `false` — a benign skip.
+     *
+     * @return array{content: string, changed: bool}
+     */
+    public static function add(string $fileContent, string $path, mixed $value, bool $overwrite = false): array
     {
         $jsonData = json_decode($fileContent, true);
 
@@ -53,14 +62,14 @@ class JsonModifier
             && !$overwrite
         ) {
             ConsoleOutput::debug(sprintf("Cannot add value at path %s because there is already a value at that path and overwrite is set to false.", $path), 1);
-            return $fileContent;
+            return ['content' => $fileContent, 'changed' => false];
         }
 
         $current = $value;
 
         $fileContentModified = json_encode($jsonData, JSON_PRETTY_PRINT + JSON_UNESCAPED_SLASHES);
 
-        return $fileContentModified;
+        return ['content' => $fileContentModified, 'changed' => true];
     }
 
     public static function remove(string $fileContent, string $path): string

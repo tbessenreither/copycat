@@ -146,10 +146,16 @@ class FileResolver
 
     public static function writeBufferedFilesToDisk(): void
     {
-        ConsoleOutput::heading("Writing buffered files to disk...", 0);
+        if (self::$bufferedFiles === []) {
+            return;
+        }
+
+        if (ConsoleOutput::isVerbose()) {
+            ConsoleOutput::heading("Writing buffered files to disk...", 0);
+        }
         foreach (self::$bufferedFiles as $file => $content) {
             file_put_contents($file, $content);
-            ConsoleOutput::info(sprintf("<dim>✓</dim> %s", FileResolver::humanizeFilePath($file)), 1);
+            ConsoleOutput::verbose(sprintf("<dim>✓</dim> %s", FileResolver::humanizeFilePath($file)), 1);
         }
         self::$bufferedFiles = [];
     }

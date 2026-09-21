@@ -10,7 +10,15 @@ use Tbessenreither\Copycat\Service\ConsoleOutput;
 
 class SymfonyModifier
 {
-    public static function addToBundle(string $fileContent, string $bundleClassName): string
+    /**
+     * Register a bundle in `config/bundles.php`.
+     *
+     * `changed=false` means the bundle line was already present — a benign
+     * skip that the caller can surface at VERBOSE.
+     *
+     * @return array{content: string, changed: bool}
+     */
+    public static function addToBundle(string $fileContent, string $bundleClassName): array
     {
         self::checkIfBundleClassIsValid($bundleClassName);
 
@@ -37,7 +45,7 @@ class SymfonyModifier
         $bundleLine = $indentation . $bundleClassName . "::class => ['all' => true],";
         if (in_array($bundleLine, $lines, true)) {
             ConsoleOutput::debug('Bundle ' . $bundleClassName . ' is already registered in bundles.php, skipping.', 1);
-            return $fileContent;
+            return ['content' => $fileContent, 'changed' => false];
         }
 
 
@@ -53,7 +61,7 @@ class SymfonyModifier
         // Insert the new bundle line at the correct position
         array_splice($lines, $insertIndex, 0, $bundleLine);
 
-        return implode(PHP_EOL, $lines);
+        return ['content' => implode(PHP_EOL, $lines), 'changed' => true];
     }
 
     public static function removeFromBundle(string $fileContent, string $bundleClassName): string
@@ -70,6 +78,15 @@ class SymfonyModifier
         return implode(PHP_EOL, $lines);
     }
 
+    /**
+     * Register a service in `config/services.yaml`.
+     *
+     * The current implementation removes any prior definition of the same
+     * service and re-inserts a fresh block, so this always mutates the YAML.
+     * We still return the shared shape for future symmetry with `addToBundle`.
+     *
+     * @return array{content: string, changed: bool}
+     */
     public static function addServiceToYaml(
         string $fileContent,
         string $serviceClass,
@@ -77,7 +94,7 @@ class SymfonyModifier
         ?bool $public = null,
         ?string $decorates = null,
         ?array $tags = null,
-    ): string {
+    ): array {
         $yamlLines = explode(PHP_EOL, $fileContent);
 
         $serviceElement = [
@@ -106,9 +123,7 @@ class SymfonyModifier
             insertArray: $elementsToAdd,
         );
 
-        $yamlString = implode(PHP_EOL, $modifiedLines);
-
-        return $yamlString;
+        return ['content' => implode(PHP_EOL, $modifiedLines), 'changed' => true];
     }
 
     private static function checkIfBundleClassIsValid(string $bundleClassName): void

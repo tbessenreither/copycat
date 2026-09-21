@@ -14,11 +14,21 @@ class EnvModifier
     public const string GROUP_END = '###< ';
 
     /**
+     * Add or update the given entries in the namespaced group inside `$fileContent`.
+     *
+     * Returns the modified content alongside a per-name breakdown of what happened
+     * so the caller (Copycat) can render a grouped, file-scoped summary. The modifier
+     * itself no longer emits user-facing output — only DEBUG plumbing lines.
+     *
      * @param EnvVar[] $entries
+     *
+     * @return array{content: string, added: string[], replaced: string[], skipped: string[]}
      */
-    public static function add(string $fileContent, array $entries, string $groupName, bool $overwrite = false): string
+    public static function add(string $fileContent, array $entries, string $groupName, bool $overwrite = false): array
     {
-        $stats = ['added' => 0, 'skipped' => 0];
+        $added = [];
+        $replaced = [];
+        $skipped = [];
 
         $fileContent = rtrim($fileContent);
 
@@ -70,19 +80,27 @@ class EnvModifier
             foreach ($groupLines as $lineKey => $line) {
                 if (str_starts_with($line, $entrySearchKey)) {
                     if ($overwrite) {
-                        ConsoleOutput::info(sprintf("<dim>↻ replaced ENV</dim> %s", $envVar->getName()), 1);
                         unset($groupLines[$lineKey]);
+                        // record as replaced (only once — subsequent duplicate lines
+                        // don't count as additional replacements)
+                        if (!$entryExists) {
+                            $replaced[] = $envVar->getName();
+                        }
+                        $entryExists = true;
+                        // continue scanning to remove all duplicate lines with this key
                     } else {
-                        ConsoleOutput::verbose(sprintf("<dim>⏭ skipped ENV</dim> %s", $envVar->getName()), 1);
                         $entryExists = true;
                     }
                 }
             }
             if (!$entryExists) {
                 $groupLines[] = $envVar->__toString();
-                $stats['added']++;
+                $added[] = $envVar->getName();
+            } elseif (!$overwrite) {
+                $skipped[] = $envVar->getName();
             } else {
-                $stats['skipped']++;
+                // overwrite=true and entry existed — write the fresh value
+                $groupLines[] = $envVar->__toString();
             }
         }
 
@@ -101,9 +119,17 @@ class EnvModifier
         // Ensure the file ends with a newline
         $lines[] = '';
 
-        ConsoleOutput::debug(sprintf("Added %d entries and skipped %d.", $stats['added'], $stats['skipped']), 2);
+        ConsoleOutput::debug(
+            sprintf('Env group "%s": %d added, %d replaced, %d skipped.', $groupName, count($added), count($replaced), count($skipped)),
+            2,
+        );
 
-        return implode(PHP_EOL, $lines);
+        return [
+            'content' => implode(PHP_EOL, $lines),
+            'added' => $added,
+            'replaced' => $replaced,
+            'skipped' => $skipped,
+        ];
     }
 
     /**

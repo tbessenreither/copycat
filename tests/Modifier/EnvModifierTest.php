@@ -28,10 +28,9 @@ class EnvModifierTest extends TestCase
         $this->testFileContent = $this->loadTestFile('env.txt');
     }
 
-    public function testAddNoOverwrite(): void
+    public function testAddNoOverwriteReturnsStatsAndContent(): void
     {
-        ob_start();
-        $modifiedContent = $this->envModifier->add(
+        $result = $this->envModifier->add(
             fileContent: $this->testFileContent,
             entries: $this->array2EnvVarArray([
                 'TEST_ENV_VAR' => 'test value',
@@ -39,12 +38,17 @@ class EnvModifierTest extends TestCase
                 'INT_VAR' => 123,
                 'BOOL_VAR' => true,
                 'NULL_VAR' => null,
-                'STRING' => 'string value',
+                'STRING' => 'string value', // present in fixture → should be skipped
             ]),
             groupName: 'testgroup',
             overwrite: false,
         );
-        ob_end_clean();
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('content', $result);
+        $this->assertArrayHasKey('added', $result);
+        $this->assertArrayHasKey('replaced', $result);
+        $this->assertArrayHasKey('skipped', $result);
 
         $expectedOverall = implode("\n", [
             '###> testgroup',
@@ -57,20 +61,21 @@ class EnvModifierTest extends TestCase
             '###< testgroup',
         ]);
 
-        $this->assertStringContainsString($expectedOverall, $modifiedContent);
-        $this->assertStringNotContainsString('lowercase_var=lowercase_value', $modifiedContent);
+        $this->assertStringContainsString($expectedOverall, $result['content']);
+        $this->assertStringNotContainsString('lowercase_var=lowercase_value', $result['content']);
 
-        $modifiedContentLines = explode("\n", $modifiedContent);
-
-        $stringLineIndex = array_search('STRING="a great string"', $modifiedContentLines);
-        $this->assertNotFalse($stringLineIndex, 'line with key STRING not found');
-        $this->assertGreaterThan(10, $stringLineIndex, 'STRING key should be somewhere at the end of the file');
+        $this->assertContains('TEST_ENV_VAR', $result['added']);
+        $this->assertContains('LOWERCASE_VAR', $result['added']);
+        $this->assertContains('INT_VAR', $result['added']);
+        $this->assertContains('BOOL_VAR', $result['added']);
+        $this->assertContains('NULL_VAR', $result['added']);
+        $this->assertContains('STRING', $result['skipped']);
+        $this->assertSame([], $result['replaced']);
     }
 
-    public function testAddWithOverwrite(): void
+    public function testAddWithOverwriteReportsReplacedByName(): void
     {
-        ob_start();
-        $modifiedContent = $this->envModifier->add(
+        $result = $this->envModifier->add(
             fileContent: $this->testFileContent,
             entries: $this->array2EnvVarArray([
                 'STRING' => 'string value',
@@ -78,7 +83,6 @@ class EnvModifierTest extends TestCase
             groupName: 'testgroup',
             overwrite: true,
         );
-        ob_end_clean();
 
         $expectedOverall = implode("\n", [
             '###> testgroup',
@@ -86,14 +90,35 @@ class EnvModifierTest extends TestCase
             '###< testgroup',
         ]);
 
-        $this->assertStringContainsString($expectedOverall, $modifiedContent);
-        $this->assertStringNotContainsString('lowercase_var=lowercase_value', $modifiedContent);
+        $this->assertStringContainsString($expectedOverall, $result['content']);
+        $this->assertStringNotContainsString('lowercase_var=lowercase_value', $result['content']);
+        $this->assertSame(['STRING'], $result['replaced']);
+        $this->assertSame([], $result['added']);
+        $this->assertSame([], $result['skipped']);
+    }
 
-        $modifiedContentLines = explode("\n", $modifiedContent);
+    public function testAddIsSilentUnderNormalVerbosity(): void
+    {
+        ConsoleOutput::reset();
+        ConsoleOutput::setColorsEnabled(false);
+        ConsoleOutput::setVerbosity(VerbosityEnum::NORMAL);
+        ConsoleOutput::startCapture();
 
-        $stringLineIndex = array_search('STRING="string value"', $modifiedContentLines);
-        $this->assertNotFalse($stringLineIndex, 'line with key STRING not found');
-        $this->assertGreaterThan(10, $stringLineIndex, 'STRING key should be somewhere at the end of the file');
+        $this->envModifier->add(
+            fileContent: $this->testFileContent,
+            entries: $this->array2EnvVarArray([
+                'STRING' => 'string value',
+            ]),
+            groupName: 'testgroup',
+            overwrite: true,
+        );
+
+        $captured = ConsoleOutput::stopCapture();
+        ConsoleOutput::reset();
+
+        // The modifier itself must not print anything user-facing anymore —
+        // Copycat is responsible for the summary line.
+        $this->assertSame('', $captured);
     }
 
     public function testRemove(): void

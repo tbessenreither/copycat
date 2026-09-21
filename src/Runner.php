@@ -109,6 +109,7 @@ class Runner
             ConsoleOutput::heading('📦  ' . $packageInfo->getNamespace());
             /** @var CopycatConfigInterface $copycatClass */
             $copycatClass::run($copycatInstance);
+            $copycatInstance->flush();
         }
     }
 
