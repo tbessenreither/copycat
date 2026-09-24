@@ -135,9 +135,9 @@ PHP Copycat finished.
 Each package emits one line per touched file so it's always obvious *which* file
 was changed and — for env vars, JSON paths, Symfony classes — *what* changed. When
 a package has nothing to do, its section renders as `(no changes)` rather than an
-empty heading. Under `COPYCAT_VERBOSITY=verbose` you also get pre-flight
-diagnostics, individual skip lines, and the deduplicated write-summary block. See
-the [Verbosity](#verbosity) section for the full layout rule.
+empty heading. Under `COPYCAT_VERBOSITY=verbose` you also get individual skip
+lines and the deduplicated write-summary block. See the [Verbosity](#verbosity)
+section for the full layout rule.
 
 Copycat now supports partial reversal of operations on package removal.
 ```text
@@ -168,8 +168,8 @@ everything except errors.
 |-----------|-------|--------------------------------------------------------------------------------------------------------------------------------|
 | `SILENT`  | `0`   | Errors only.                                                                                                                   |
 | `NORMAL`  | `1`   | + warnings, package headings, one line per file touched (env-var names, copy filenames when short, ignore counts) _(default)_. |
-| `VERBOSE` | `2`   | + pre-flight lines, per-name skip detail, per-target-directory copy listings, and the deduplicated write-summary at the end.   |
-| `DEBUG`   | `3`   | + trace output — `Loading file: …`, `Saving file: …`, group-reorder messages, and full error stack traces.                     |
+| `VERBOSE` | `2`   | + per-name skip detail, per-target-directory copy listings, and the deduplicated write-summary at the end.                     |
+| `DEBUG`   | `3`   | + trace output — pre-flight `• Check file copy …` lines, `Loading file: …`, `Saving file: …`, group-reorder messages, and full error stack traces. |
 
 ### Layout at NORMAL
 
