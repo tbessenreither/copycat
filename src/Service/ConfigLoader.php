@@ -35,7 +35,7 @@ class ConfigLoader
                 isset($composerData['extra']) && is_array($composerData['extra'])
                 && isset($composerData['extra']['copycat']) && is_array($composerData['extra']['copycat'])
             ) {
-                ConsoleOutput::info('Loading config from composer.json at extra.copycat.', 1);
+                ConsoleOutput::verbose('Loading config from composer.json at extra.copycat.', 1);
 
                 return $composerData['extra']['copycat'];
             }
