@@ -5,36 +5,40 @@ declare(strict_types=1);
 namespace Tbessenreither\Copycat\Tests\Modifier;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use RuntimeException;
+use Tbessenreither\Copycat\Enum\VerbosityEnum;
 use Tbessenreither\Copycat\Modifier\IgnoreFileModifier;
+use Tbessenreither\Copycat\Service\ConsoleOutput;
 use Tbessenreither\Copycat\Tests\TestCase;
 
 #[CoversClass(IgnoreFileModifier::class)]
+#[UsesClass(ConsoleOutput::class)]
+#[UsesClass(VerbosityEnum::class)]
 class IgnorefileModifierTest extends TestCase
 {
     public function testAddCreatesNamespacedGroupAndKeepsExistingContent(): void
     {
-        ob_start();
-        $modified = IgnoreFileModifier::add(
+        $result = IgnoreFileModifier::add(
             fileContent: '.git/' . PHP_EOL,
             entries: ['tests/', '.github/'],
             groupName: 'testgroup',
             fileName: '.dockerignore',
         );
-        ob_end_clean();
 
         $this->assertStringContainsString(implode(PHP_EOL, [
             '###> testgroup',
             'tests/',
             '.github/',
             '###< testgroup',
-        ]), $modified);
-        $this->assertStringContainsString('.git/', $modified);
+        ]), $result['content']);
+        $this->assertStringContainsString('.git/', $result['content']);
+        $this->assertSame(['tests/', '.github/'], $result['added']);
+        $this->assertSame([], $result['skipped']);
     }
 
     public function testAddSkipsEntriesAlreadyPresentInTheGroup(): void
     {
-        ob_start();
         $once = IgnoreFileModifier::add(
             fileContent: '',
             entries: ['tests/'],
@@ -42,14 +46,35 @@ class IgnorefileModifierTest extends TestCase
             fileName: '.dockerignore',
         );
         $twice = IgnoreFileModifier::add(
-            fileContent: $once,
+            fileContent: $once['content'],
             entries: ['tests/'],
             groupName: 'testgroup',
             fileName: '.dockerignore',
         );
-        ob_end_clean();
 
-        $this->assertSame(1, substr_count($twice, 'tests/'));
+        $this->assertSame(1, substr_count($twice['content'], 'tests/'));
+        $this->assertSame([], $twice['added']);
+        $this->assertSame(['tests/'], $twice['skipped']);
+    }
+
+    public function testAddIsSilentUnderNormalVerbosity(): void
+    {
+        ConsoleOutput::reset();
+        ConsoleOutput::setColorsEnabled(false);
+        ConsoleOutput::setVerbosity(VerbosityEnum::NORMAL);
+        ConsoleOutput::startCapture();
+
+        IgnoreFileModifier::add(
+            fileContent: '',
+            entries: ['tests/', '.github/'],
+            groupName: 'testgroup',
+            fileName: '.dockerignore',
+        );
+
+        $captured = ConsoleOutput::stopCapture();
+        ConsoleOutput::reset();
+
+        $this->assertSame('', $captured);
     }
 
     public function testRemoveWithoutGroupReportsTheFileName(): void

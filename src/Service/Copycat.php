@@ -6,10 +6,12 @@ namespace Tbessenreither\Copycat\Service;
 
 use InvalidArgumentException;
 use Tbessenreither\Copycat\Dto\EnvVar;
+use Tbessenreither\Copycat\Dto\PackageInfo;
 use Tbessenreither\Copycat\Enum\CopyTargetEnum;
 use Tbessenreither\Copycat\Enum\EnvTargetEnum;
 use Tbessenreither\Copycat\Enum\JsonTargetEnum;
 use Tbessenreither\Copycat\Enum\KnownSystemsEnum;
+use Tbessenreither\Copycat\Exception\SystemCheckFailedException;
 use Tbessenreither\Copycat\Interface\CopycatInterface;
 use Tbessenreither\Copycat\Modifier\EnvModifier;
 use Tbessenreither\Copycat\Modifier\FileCopy;
@@ -18,8 +20,45 @@ use Tbessenreither\Copycat\Modifier\JsonModifier;
 use Tbessenreither\Copycat\Modifier\SymfonyModifier;
 use Throwable;
 
+/**
+ * Coordinates the per-package operations that make up a Copycat run.
+ *
+ * Each public op method (copy, envAdd, jsonAdd, …) does the actual work
+ * (system validation, file resolution, modifier invocation) and then hands
+ * the outcome to {@see OperationRecorder} instead of printing anything
+ * directly. Presentation is deferred until {@see self::flush()}, which the
+ * Runner calls after each package's {@see \Tbessenreither\Copycat\Interface\CopycatConfigInterface::run()}.
+ *
+ * The two collaborators involved:
+ *
+ *   - {@see OperationRecorder} — appends one entry per op call and, on
+ *     {@see OperationRecorder::drain()}, coalesces consecutive entries that
+ *     share a target file/directory into a single group.
+ *   - {@see OperationPrinter}  — takes the coalesced groups and renders them
+ *     to {@see ConsoleOutput}, applying the NORMAL/VERBOSE layout rules
+ *     documented in the README under "Verbosity".
+ *
+ * If the printer reports that nothing was emitted for the package (every
+ * group was a benign skip at NORMAL), this class prints `(no changes)` so
+ * an empty section under the package heading doesn't look like something
+ * went wrong.
+ */
 class Copycat extends CopycatBase implements CopycatInterface
 {
+    private readonly OperationRecorder $recorder;
+    private readonly OperationPrinter $printer;
+
+    public function __construct(
+        PackageInfo $packageInfo,
+        ?string $projectRoot = null,
+        ?OperationRecorder $recorder = null,
+        ?OperationPrinter $printer = null,
+    ) {
+        parent::__construct($packageInfo, $projectRoot);
+        $this->recorder = $recorder ?? new OperationRecorder();
+        $this->printer = $printer ?? new OperationPrinter();
+    }
+
     /**
      * Copies a file from the package to the specified target location in the project.
      * This method does not create directories if they do not exist, so the target directory must already exist before calling this method.
@@ -27,7 +66,7 @@ class Copycat extends CopycatBase implements CopycatInterface
     public function copy(CopyTargetEnum $target, string $file, bool $overwrite = true, bool $gitIgnore = false, bool $createTargetDirectory = false): void
     {
         try {
-            echo '    - copy ' . $file . ' to ' . $target->value . '' . PHP_EOL;
+            ConsoleOutput::debug(sprintf("• Check file copy %s to %s/ ...", basename($file), $target->value), 1);
             SystemValidator::validateSystem($this->packageInfo, $target->getSystem());
 
             $file = FileResolver::resolve(
@@ -35,12 +74,14 @@ class Copycat extends CopycatBase implements CopycatInterface
                 file: $file,
             );
 
-            FileCopy::copy(
+            $wasCopied = FileCopy::copy(
                 source: $file,
                 destinationDirectory: $this->getTargetDir($target),
                 overwrite: $overwrite,
                 createTargetDirectory: $createTargetDirectory,
             );
+
+            $this->recorder->recordCopy($target->value, basename($file), $wasCopied);
 
             if ($gitIgnore) {
                 $gitignoreValue = $target->value . '/' . basename($file);
@@ -50,15 +91,17 @@ class Copycat extends CopycatBase implements CopycatInterface
                 $this->gitIgnoreAdd($gitignoreValue);
             }
 
+        } catch (SystemCheckFailedException $e) {
+            ConsoleOutput::verbose($e->getMessage(), 2);
         } catch (Throwable $e) {
-            $this->logError('copy', $e);
+            ConsoleOutput::error($e->getMessage(), 2);
         }
     }
 
     public function copyDirectory(CopyTargetEnum $target, string $source, bool $overwrite = true, bool $gitIgnore = false, bool $createTargetDirectory = false): void
     {
         try {
-            echo '    - copy directory ' . $source . ' to ' . $target->value . '' . PHP_EOL;
+            ConsoleOutput::debug(sprintf("• Copy directory %s to %s/ ...", basename($source), $target->value), 1);
             SystemValidator::validateSystem($this->packageInfo, $target->getSystem());
 
             $sourceDir = FileResolver::resolveDirectory(
@@ -72,12 +115,19 @@ class Copycat extends CopycatBase implements CopycatInterface
 
             $destinationDir = $this->getTargetDir($target);
 
-            FileCopy::copyDirectory(
+            $result = FileCopy::copyDirectory(
                 sourceDirectory: $sourceDir,
                 destinationDirectory: $destinationDir,
                 overwrite: $overwrite,
                 createTargetDirectory: $createTargetDirectory,
             );
+
+            foreach ($result['copied'] as $relativePath) {
+                $this->recorder->recordCopy($target->value, $relativePath, true);
+            }
+            foreach ($result['skipped'] as $relativePath) {
+                $this->recorder->recordCopy($target->value, $relativePath, false);
+            }
 
         } catch (Throwable $e) {
             $this->logError('copyDirectory', $e);
@@ -87,8 +137,6 @@ class Copycat extends CopycatBase implements CopycatInterface
     public function jsonAdd(JsonTargetEnum $target, string $path, mixed $value, bool $overwrite = false): void
     {
         try {
-            echo "    - Adding value to " . $target->value . " at path " . $path . PHP_EOL;
-
             JsonModifier::securityChecks(target: $target, path: $path);
             SystemValidator::validateSystem($this->packageInfo, $target->getSystem());
 
@@ -97,14 +145,16 @@ class Copycat extends CopycatBase implements CopycatInterface
                 file: $target->value,
             );
 
-            $jsonModified = JsonModifier::add(
+            $result = JsonModifier::add(
                 fileContent: FileResolver::loadFile($file),
                 path: $path,
                 value: $value,
                 overwrite: $overwrite,
             );
 
-            FileResolver::storeFileModification($file, $jsonModified);
+            FileResolver::storeFileModification($file, $result['content']);
+
+            $this->recorder->recordJson($target->value, $path, $result['changed']);
 
         } catch (Throwable $e) {
             $this->logError('jsonAdd', $e);
@@ -151,7 +201,6 @@ class Copycat extends CopycatBase implements CopycatInterface
             $entries = [$entries];
         }
         try {
-            echo "    - Adding " . count($entries) . " entries to " . $fileName . ":" . PHP_EOL;
             SystemValidator::validateSystem($this->packageInfo, $system);
             $file = FileResolver::resolveInProject(
                 packageInfo: $this->packageInfo,
@@ -159,14 +208,16 @@ class Copycat extends CopycatBase implements CopycatInterface
                 createIfNotExists: true,
             );
 
-            $modifiedContent = IgnoreFileModifier::add(
+            $result = IgnoreFileModifier::add(
                 fileContent: FileResolver::loadFile($file),
                 entries: $entries,
                 groupName: $this->packageInfo->getNamespace(),
                 fileName: $fileName,
             );
 
-            FileResolver::storeFileModification($file, $modifiedContent);
+            FileResolver::storeFileModification($file, $result['content']);
+
+            $this->recorder->recordIgnore($fileName, $result['added'], $result['skipped']);
 
         } catch (Throwable $e) {
             $this->logError($method, $e);
@@ -176,7 +227,6 @@ class Copycat extends CopycatBase implements CopycatInterface
     public function symfonyBundleAdd(string $bundleClassName): void
     {
         try {
-            echo "    - Adding $bundleClassName to symfony bundles.php." . PHP_EOL;
             SystemValidator::validateSystem($this->packageInfo, KnownSystemsEnum::SYMFONY);
 
             $file = FileResolver::resolveInProject(
@@ -184,15 +234,17 @@ class Copycat extends CopycatBase implements CopycatInterface
                 file: 'config/bundles.php',
             );
 
-            $modifiedContent = SymfonyModifier::addToBundle(
+            $result = SymfonyModifier::addToBundle(
                 fileContent: FileResolver::loadFile($file),
                 bundleClassName: $bundleClassName,
             );
 
-            FileResolver::storeFileModification($file, $modifiedContent);
+            FileResolver::storeFileModification($file, $result['content']);
+
+            $this->recorder->recordBundle('config/bundles.php', $bundleClassName, $result['changed']);
 
         } catch (Throwable $e) {
-            $this->logError('symfonyBundleAdd', $e);
+            $this->logError(__METHOD__, $e);
         }
     }
 
@@ -204,7 +256,6 @@ class Copycat extends CopycatBase implements CopycatInterface
         ?array $tags = null,
     ): void {
         try {
-            echo "    - Adding service $serviceClass to symfony services.yaml." . PHP_EOL;
             SystemValidator::validateSystem($this->packageInfo, KnownSystemsEnum::SYMFONY);
 
             $file = FileResolver::resolveInProject(
@@ -212,7 +263,7 @@ class Copycat extends CopycatBase implements CopycatInterface
                 file: 'config/services.yaml',
             );
 
-            $modifiedContent = SymfonyModifier::addServiceToYaml(
+            $result = SymfonyModifier::addServiceToYaml(
                 fileContent: FileResolver::loadFile($file),
                 serviceClass: $serviceClass,
                 arguments: $arguments,
@@ -221,10 +272,12 @@ class Copycat extends CopycatBase implements CopycatInterface
                 tags: $tags,
             );
 
-            FileResolver::storeFileModification($file, $modifiedContent);
+            FileResolver::storeFileModification($file, $result['content']);
+
+            $this->recorder->recordService('config/services.yaml', $serviceClass, $result['changed']);
 
         } catch (Throwable $e) {
-            $this->logError('symfonyAddServiceToYaml', $e);
+            $this->logError(__METHOD__, $e);
         }
     }
 
@@ -233,9 +286,6 @@ class Copycat extends CopycatBase implements CopycatInterface
      */
     public function envAdd(EnvTargetEnum $target, array $entries, bool $overwrite = false): void
     {
-        if (!is_array($entries)) {
-            $entries = [$entries];
-        }
         foreach ($entries as $key => $entry) {
             if (!$entry instanceof EnvVar) {
                 $entries[$key] = new EnvVar(
@@ -247,7 +297,6 @@ class Copycat extends CopycatBase implements CopycatInterface
         $entries = array_values($entries); // reindex numerically for the modifier
 
         try {
-            echo "    - Adding " . count($entries) . " entries to " . $target->value . ":" . PHP_EOL;
             SystemValidator::validateSystem($this->packageInfo, $target->getSystem());
             $file = FileResolver::resolveInProject(
                 packageInfo: $this->packageInfo,
@@ -255,18 +304,39 @@ class Copycat extends CopycatBase implements CopycatInterface
                 createIfNotExists: true,
             );
 
-            $modifiedContent = EnvModifier::add(
+            $result = EnvModifier::add(
                 fileContent: FileResolver::loadFile($file),
                 entries: $entries,
                 groupName: $this->packageInfo->getNamespace(),
                 overwrite: $overwrite,
             );
 
-            FileResolver::storeFileModification($file, $modifiedContent);
+            FileResolver::storeFileModification($file, $result['content']);
+
+            $this->recorder->recordEnv(
+                file: $target->value,
+                added: $result['added'],
+                replaced: $result['replaced'],
+                skipped: $result['skipped'],
+            );
 
         } catch (Throwable $e) {
-            $this->logError('envAdd', $e);
+            $this->logError(__METHOD__, $e);
         }
     }
 
+    /**
+     * Flush all buffered operations for the current package as grouped output.
+     *
+     * Hands the recorder's coalesced groups to the printer. If nothing was
+     * user-visible (e.g. every group was a benign skip at NORMAL), emits a
+     * fallback `(no changes)` line so an empty package section doesn't look
+     * like something went wrong.
+     */
+    public function flush(): void
+    {
+        if (!$this->printer->emit($this->recorder->drain())) {
+            ConsoleOutput::info('<dim>(no changes)</dim>', 1);
+        }
+    }
 }

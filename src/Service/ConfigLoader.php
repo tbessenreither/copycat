@@ -35,7 +35,7 @@ class ConfigLoader
                 isset($composerData['extra']) && is_array($composerData['extra'])
                 && isset($composerData['extra']['copycat']) && is_array($composerData['extra']['copycat'])
             ) {
-                echo "Loaded config from composer.json at extra.copycat.\n";
+                ConsoleOutput::verbose('Loading config from composer.json at extra.copycat.', 1);
 
                 return $composerData['extra']['copycat'];
             }
@@ -51,7 +51,7 @@ class ConfigLoader
         $configContent = file_get_contents($resolvedFile);
         $configContentDecoded = json_decode($configContent, true);
 
-        echo "Loaded config from file: " . $resolvedFile . "\n";
+        ConsoleOutput::debug('Loaded config from file: ' . $resolvedFile, 1);
 
         return $configContentDecoded;
     }

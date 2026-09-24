@@ -9,10 +9,14 @@ use Tbessenreither\Copycat\Dto\PackageInfo;
 use Tbessenreither\Copycat\Dto\SystemIndicator;
 use Tbessenreither\Copycat\Enum\KnownSystemsEnum;
 use Tbessenreither\Copycat\Enum\SystemIndicatorTypeEnum;
+use Tbessenreither\Copycat\Exception\SystemCheckFailedException;
 use Throwable;
 
 class SystemValidator
 {
+    /**
+     * @throws SystemCheckFailedException if system check fails
+     */
     public static function validateSystem(PackageInfo $packageInfo, ?KnownSystemsEnum $system): void
     {
         if ($system === null) {
@@ -20,7 +24,7 @@ class SystemValidator
         }
 
         if (!self::checkForSystem(packageInfo: $packageInfo, system: $system)) {
-            throw new RuntimeException('The current project does not appear to be a ' . $system->value . ' project. Aborting operation.');
+            throw new SystemCheckFailedException(system: $system);
         }
     }
 

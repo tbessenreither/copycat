@@ -118,52 +118,139 @@ Example output on execution:
 
 ```text
 Running PHP Copycat...
-Running copycat for namespace Tbessenreither\FeatureFlagServiceClient
-    - Adding value to src/test.json at path nested.level1.level2.level3
-        Loading file: /var/www/html/src/test.json
-        Storing modifications for: /var/www/html/src/test.json
-Running copycat for namespace Tbessenreither\MultiLevelCache
-    - copy bin/mlc-make to .ddev/commands/web
-    - copy bin/mlc-update to .ddev/commands/web
-        copy Error - Destination file already exists: /var/www/html/.ddev/commands/web/mlc-update
-    - Adding 2 entries to .gitignore:
-        Loading file: /var/www/html/.gitignore
-        Added 0 entries to .gitignore, skipped 2 entries that already exist.
-        Storing modifications for: /var/www/html/.gitignore
-    - Adding Tbessenreither\MultiLevelCache\DataCollector\MultiLevelCacheDataCollector to symfony bundles.php.
-        Loading file: /var/www/html/config/bundles.php
-        symfonyBundleAdd Error - Bundle class Tbessenreither\MultiLevelCache\DataCollector\MultiLevelCacheDataCollector does not implement the Symfony BundleInterface. This will not be added to bundles.php
-    - Adding service Tbessenreither\Copycat\Copycat to symfony services.yaml.
-        Loading file: /var/www/html/config/services.yaml
-        symfonyAddServiceToYaml Error - Service Tbessenreither\Copycat\Copycat is already registered in services.yaml, skipping.
 
-Writing buffered file modifications to disk...
-    - Writing file to disk: /var/www/html/src/test.json
-    - Writing file to disk: /var/www/html/.gitignore
-    - Writing file to disk: /var/www/html/config/bundles.php
-    - Writing file to disk: /var/www/html/config/services.yaml
+📦  Tbessenreither\FeatureFlagServiceClient
+    • .env.example: + FF_API_URL, + FF_API_TOKEN, + FF_TIMEOUT
+    • .gitignore — 1 added
+
+📦  Tbessenreither\MultiLevelCache
+    • .ddev/commands/web/: mlc-make, mlc-update
+    • config/bundles.php: + Tbessenreither\MultiLevelCache\MultiLevelCacheBundle
+    • .env.example: ↻ REDIS_DSN
+    • .env.local: 1 already set — skipped
 
 PHP Copycat finished.
 ```
+
+Each package emits one line per touched file so it's always obvious *which* file
+was changed and — for env vars, JSON paths, Symfony classes — *what* changed. When
+a package has nothing to do, its section renders as `(no changes)` rather than an
+empty heading. Under `COPYCAT_VERBOSITY=verbose` you also get individual skip
+lines and the deduplicated write-summary block. See the [Verbosity](#verbosity)
+section for the full layout rule.
 
 Copycat now supports partial reversal of operations on package removal.
 ```text
 Running PHP Copycat...
-Reverting copycat for namespace Tbessenreither\FeatureFlagServiceClient
-    - Removing src/CopycatConfig.php from public
-    - Removing .gitignore entries:
-        Loading file: /var/www/html/.gitignore
-        Storing modifications for: /var/www/html/.gitignore
-    - Removing Tbessenreither\FeatureFlagServiceClient\Bundle\FeatureFlagClientBundle from symfony bundles.php.
-        Loading file: /var/www/html/config/bundles.php
-        Storing modifications for: /var/www/html/config/bundles.php
 
-Writing buffered file modifications to disk...
-    - Writing file to disk: /var/www/html/.gitignore
-    - Writing file to disk: /var/www/html/config/bundles.php
+📦  Reverting Tbessenreither\FeatureFlagServiceClient
 
 PHP Copycat finished.
 ```
+
+Reversal today happens quietly at `NORMAL` — the group markers in each affected
+file (`###> Namespace` / `###< Namespace`) get stripped and copied files removed,
+but the reverse path doesn't yet route through the grouped collector, so use
+`COPYCAT_VERBOSITY=verbose` to see the per-file activity.
+
+## Verbosity
+
+Copycat filters its CLI output by a verbosity level. By default (`NORMAL`) you
+see one line per file each package touched — with names for env vars,
+paths for JSON, and classes for Symfony ops so it's always clear both *which*
+file changed and *what* changed inside it. Raise the level to reveal
+per-entry skip detail and plumbing chatter, or lower it to suppress
+everything except errors.
+
+### Levels
+
+| Level     | Value | Shows                                                                                                                          |
+|-----------|-------|--------------------------------------------------------------------------------------------------------------------------------|
+| `SILENT`  | `0`   | Errors only.                                                                                                                   |
+| `NORMAL`  | `1`   | + warnings, package headings, one line per file touched (env-var names, copy filenames when short, ignore counts) _(default)_. |
+| `VERBOSE` | `2`   | + per-name skip detail, per-target-directory copy listings, and the deduplicated write-summary at the end.                     |
+| `DEBUG`   | `3`   | + trace output — pre-flight `• Check file copy …` lines, `Loading file: …`, `Saving file: …`, group-reorder messages, and full error stack traces. |
+
+### Layout at NORMAL
+
+Every operation renders as a single line prefixed with the target file. When
+one call touches many entries — an `envAdd` with several vars, or a `copy` into
+a target directory that receives multiple files — Copycat picks between two
+shapes based on how many entries there are and how long the resulting line
+would be:
+
+- **Inline** (`• .env.example: ↻ APP_ENV, ↻ STAGE`) when there are at most 5
+  entries *and* the rendered line stays within 100 characters. This is the
+  common case for env vars and small copy batches.
+- **Count summary** (`• .kiro/steering/ — 12 copied`) when either threshold is
+  exceeded. Individual names are held back for the VERBOSE view.
+
+Skips get compact treatment at NORMAL:
+
+- `envAdd` skips (pre-existing keys the caller chose not to overwrite) collapse
+  to a `(N already set)` suffix on the inline line, or a
+  `• .env.local: N already set — skipped` line when *only* skips happened.
+- `copy` skips ("destination already exists"), `symfonyBundleAdd` "already
+  registered", and `jsonAdd` "already present" produce no output at NORMAL —
+  they surface at VERBOSE as `⏭ <identifier>` lines under the file heading.
+- A package whose every operation was a benign skip renders as `(no changes)`
+  under its heading, so an empty section never looks like something went wrong.
+
+Symbols in play:
+
+| Symbol | Meaning              |
+|--------|----------------------|
+| `+`    | added                |
+| `↻`    | replaced (overwrite) |
+| `⏭`    | skipped (verbose)    |
+| `✖`    | error                |
+| `⚠`    | warning              |
+| `—`    | count summary        |
+| `:`    | inline enumeration   |
+
+Set the level via the `COPYCAT_VERBOSITY` environment variable. Both the level name and its numeric value are accepted (names are case-insensitive):
+
+```bash
+COPYCAT_VERBOSITY=verbose composer install
+COPYCAT_VERBOSITY=2 composer update
+```
+
+To make it stick across every run, export it from your shell profile (`~/.bashrc`, `~/.zshrc`, …):
+
+```bash
+export COPYCAT_VERBOSITY=verbose
+```
+
+### Containerized setups
+
+When Composer runs inside a container, `COPYCAT_VERBOSITY` has to be set _inside that container_, not on the host — otherwise Copycat never sees it. Setting the variable on the host in front of a wrapper command (e.g. `COPYCAT_VERBOSITY=3 ddev composer install`) does **not** work: it applies only to the host process and is not forwarded into the container.
+
+Use whichever env-passthrough mechanism your runtime provides. A few concrete examples:
+
+- **DDEV**, one-off:
+
+  ```bash
+  ddev exec COPYCAT_VERBOSITY=3 composer install
+  ```
+
+  Persistent for the project — add it to `.ddev/config.yaml` and `ddev restart`:
+
+  ```yaml
+  web_environment:
+      - COPYCAT_VERBOSITY=verbose
+  ```
+
+- **Docker Compose**, one-off:
+
+  ```bash
+  docker compose exec -e COPYCAT_VERBOSITY=3 app composer install
+  ```
+
+- **Plain `docker run`**:
+
+  ```bash
+  docker run --rm -e COPYCAT_VERBOSITY=3 -v "$PWD:/app" -w /app composer:2 install
+  ```
 
 ## Available Operations
 

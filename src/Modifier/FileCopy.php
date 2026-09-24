@@ -8,10 +8,18 @@ use InvalidArgumentException;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RuntimeException;
+use Tbessenreither\Copycat\Service\ConsoleOutput;
 
 class FileCopy
 {
-    public static function copy(string $source, string $destinationDirectory, bool $overwrite = true, bool $createTargetDirectory = false, bool $executable = false): void
+    /**
+     * Copy a file into the destination directory.
+     *
+     * @return bool `true` when the file was actually written, `false` when the
+     *              destination already existed and `$overwrite` was `false`
+     *              (i.e. a benign skip, no state change).
+     */
+    public static function copy(string $source, string $destinationDirectory, bool $overwrite = true, bool $createTargetDirectory = false, bool $executable = false): bool
     {
         if (!file_exists($source) || !is_file($source)) {
             throw new InvalidArgumentException('Source file does not exist: ' . $source);
@@ -28,7 +36,8 @@ class FileCopy
         $destination = rtrim($destinationDirectory, '/') . '/' . basename($source);
 
         if (!$overwrite && file_exists($destination)) {
-            throw new RuntimeException('Destination file already exists: ' . $destination);
+            ConsoleOutput::debug(sprintf("Destination file already exists: %s", $destination), 1);
+            return false;
         }
 
         if (!copy($source, $destination)) {
@@ -40,6 +49,8 @@ class FileCopy
                 throw new RuntimeException('Failed to set executable permissions for ' . $destination);
             }
         }
+
+        return true;
     }
 
     public static function remove(string $source, string $destinationDirectory): void
@@ -59,7 +70,14 @@ class FileCopy
         }
     }
 
-    public static function copyDirectory(string $sourceDirectory, string $destinationDirectory, bool $overwrite = true, bool $createTargetDirectory = false): void
+    /**
+     * Copy every file under `$sourceDirectory` into `$destinationDirectory`.
+     *
+     * @return array{copied: string[], skipped: string[]} Names (relative to
+     *         `$destinationDirectory`) of files that were actually written vs
+     *         files that were skipped because a same-named file already existed.
+     */
+    public static function copyDirectory(string $sourceDirectory, string $destinationDirectory, bool $overwrite = true, bool $createTargetDirectory = false): array
     {
         if (!file_exists($sourceDirectory) || !is_dir($sourceDirectory)) {
             throw new InvalidArgumentException('Source directory does not exist: ' . $sourceDirectory);
@@ -73,6 +91,9 @@ class FileCopy
             throw new InvalidArgumentException('Destination directory does not exist: ' . $destinationDirectory);
         }
 
+        $copied = [];
+        $skipped = [];
+
         $iterator = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($sourceDirectory, RecursiveDirectoryIterator::SKIP_DOTS),
             RecursiveIteratorIterator::SELF_FIRST
@@ -82,9 +103,16 @@ class FileCopy
             if ($item->isDir()) {
                 self::ensureDirectoryExists($destPath);
             } else {
-                self::copy($item->getPathname(), dirname($destPath), $overwrite, $createTargetDirectory, false);
+                $wasCopied = self::copy($item->getPathname(), dirname($destPath), $overwrite, $createTargetDirectory, false);
+                if ($wasCopied) {
+                    $copied[] = $iterator->getSubPathName();
+                } else {
+                    $skipped[] = $iterator->getSubPathName();
+                }
             }
         }
+
+        return ['copied' => $copied, 'skipped' => $skipped];
     }
 
     public static function removeDirectory(string $sourceDirectory, string $destinationDirectory): void
