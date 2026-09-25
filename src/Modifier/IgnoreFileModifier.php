@@ -92,6 +92,22 @@ class IgnoreFileModifier
     }
 
     /**
+     * Returns true only when both the group start and end markers are present in the file content.
+     * Intended as a cheap precondition check before calling {@see self::remove()} — that method
+     * throws when the group is missing, and callers that want an idempotent "reset" should use
+     * this method to avoid the exception path.
+     */
+    public static function hasGroup(string $fileContent, string $groupName): bool
+    {
+        ['start' => $groupStartString, 'end' => $groupEndString] = self::getGroupStartAndStopStrings($groupName);
+
+        $lines = explode(PHP_EOL, $fileContent);
+
+        return in_array($groupStartString, $lines, true)
+            && in_array($groupEndString, $lines, true);
+    }
+
+    /**
      * @return array{end: string, start: string}
      */
     private static function getGroupStartAndStopStrings(string $groupName): array
