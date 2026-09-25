@@ -63,4 +63,77 @@ class IgnorefileModifierTest extends TestCase
             fileName: '.dockerignore',
         );
     }
+
+    public function testHasGroupReturnsFalseForEmptyContent(): void
+    {
+        $this->assertFalse(IgnoreFileModifier::hasGroup('', 'testgroup'));
+    }
+
+    public function testHasGroupReturnsFalseWhenMarkersAreAbsent(): void
+    {
+        $this->assertFalse(IgnoreFileModifier::hasGroup(
+            fileContent: implode(PHP_EOL, ['.git/', 'vendor/']),
+            groupName: 'testgroup',
+        ));
+    }
+
+    public function testHasGroupReturnsFalseWhenOnlyStartMarkerIsPresent(): void
+    {
+        // Truncated / half-written block should not count as present — remove() would fail on it.
+        $this->assertFalse(IgnoreFileModifier::hasGroup(
+            fileContent: implode(PHP_EOL, ['###> testgroup', 'entry']),
+            groupName: 'testgroup',
+        ));
+    }
+
+    public function testHasGroupReturnsTrueForAWellFormedGroup(): void
+    {
+        ob_start();
+        $content = IgnoreFileModifier::add(
+            fileContent: '',
+            entries: ['tests/'],
+            groupName: 'testgroup',
+            fileName: '.dockerignore',
+        );
+        ob_end_clean();
+
+        $this->assertTrue(IgnoreFileModifier::hasGroup($content, 'testgroup'));
+    }
+
+    public function testHasGroupIsGroupNameSpecific(): void
+    {
+        ob_start();
+        $content = IgnoreFileModifier::add(
+            fileContent: '',
+            entries: ['tests/'],
+            groupName: 'testgroup',
+            fileName: '.dockerignore',
+        );
+        ob_end_clean();
+
+        $this->assertFalse(IgnoreFileModifier::hasGroup($content, 'othergroup'));
+    }
+
+    public function testAddThenRemoveRestoresFileToPreGroupState(): void
+    {
+        $baseline = implode(PHP_EOL, ['.git/', 'vendor/']) . PHP_EOL;
+
+        ob_start();
+        $withGroup = IgnoreFileModifier::add(
+            fileContent: $baseline,
+            entries: ['tests/', '.github/'],
+            groupName: 'testgroup',
+            fileName: '.gitignore',
+        );
+        $withoutGroup = IgnoreFileModifier::remove(
+            fileContent: $withGroup,
+            groupName: 'testgroup',
+            fileName: '.gitignore',
+        );
+        ob_end_clean();
+
+        $this->assertFalse(IgnoreFileModifier::hasGroup($withoutGroup, 'testgroup'));
+        $this->assertStringContainsString('.git/', $withoutGroup);
+        $this->assertStringContainsString('vendor/', $withoutGroup);
+    }
 }
