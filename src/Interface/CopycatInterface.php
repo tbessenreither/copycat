@@ -28,11 +28,30 @@ interface CopycatInterface
     public function gitIgnoreAdd(string|array $entries): void;
 
     /**
+     * Removes the namespaced group block from the .gitignore file, if present.
+     *
+     * Idempotent: no-op when the .gitignore file does not exist or when the
+     * package's group block is not currently in it. Intended for callers that
+     * want to fully rebuild the block on every run instead of accreting stale
+     * entries across composer updates.
+     */
+    public function gitIgnoreReset(): void;
+
+    /**
      * Adds one or more entries to the .dockerignore file in project root. If the .dockerignore file does not exist, it will be created.
      * Only runs in projects that contain a Dockerfile.
      * @param string|string[] $entries
      */
     public function dockerIgnoreAdd(string|array $entries): void;
+
+    /**
+     * Removes the namespaced group block from the .dockerignore file, if present.
+     *
+     * Idempotent: no-op when the .dockerignore file does not exist or when the
+     * package's group block is not currently in it. Only runs in projects that
+     * contain a Dockerfile.
+     */
+    public function dockerIgnoreReset(): void;
 
     public function symfonyBundleAdd(string $bundleClassName): void;
 
