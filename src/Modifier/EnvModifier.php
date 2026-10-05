@@ -6,6 +6,7 @@ namespace Tbessenreither\Copycat\Modifier;
 
 use RuntimeException;
 use Tbessenreither\Copycat\Dto\EnvVar;
+use Tbessenreither\Copycat\Service\ConsoleOutput;
 
 class EnvModifier
 {
@@ -13,11 +14,21 @@ class EnvModifier
     public const string GROUP_END = '###< ';
 
     /**
+     * Add or update the given entries in the namespaced group inside `$fileContent`.
+     *
+     * Returns the modified content alongside a per-name breakdown of what happened
+     * so the caller (Copycat) can render a grouped, file-scoped summary. The modifier
+     * itself no longer emits user-facing output — only DEBUG plumbing lines.
+     *
      * @param EnvVar[] $entries
+     *
+     * @return array{content: string, added: string[], replaced: string[], skipped: string[]}
      */
-    public static function add(string $fileContent, array $entries, string $groupName, bool $overwrite = false): string
+    public static function add(string $fileContent, array $entries, string $groupName, bool $overwrite = false): array
     {
-        $stats = ['added' => 0, 'skipped' => 0];
+        $added = [];
+        $replaced = [];
+        $skipped = [];
 
         $fileContent = rtrim($fileContent);
 
@@ -48,17 +59,17 @@ class EnvModifier
         foreach ($entries as $envVar) {
             $entrySearchKey = $envVar->getName() . '=';
 
-            // first we cleanup anny grouping issues by moving any existing entries with the same key into the group, so that we can handle them properly with the overwrite flag
+            // first we clean up any grouping issues by moving any existing entries with the same key into the group, so that we can handle them properly with the overwrite flag
             foreach ($linesBeforeGroup as $lineKey => $line) {
                 if (str_starts_with($line, $entrySearchKey)) {
-                    echo "        Entry with key " . $envVar->getName() . " already exists, moving to group." . PHP_EOL;
+                    ConsoleOutput::debug(sprintf("Moving %s into group", $envVar->getName()), 2);
                     $groupLines[] = $line;
                     unset($linesBeforeGroup[$lineKey]);
                 }
             }
             foreach ($linesAfterGroup as $lineKey => $line) {
                 if (str_starts_with($line, $entrySearchKey)) {
-                    echo "        Entry with key " . $envVar->getName() . " already exists, moving to group." . PHP_EOL;
+                    ConsoleOutput::debug(sprintf("Moving %s into group", $envVar->getName()), 2);
                     $groupLines[] = $line;
                     unset($linesAfterGroup[$lineKey]);
                 }
@@ -69,19 +80,27 @@ class EnvModifier
             foreach ($groupLines as $lineKey => $line) {
                 if (str_starts_with($line, $entrySearchKey)) {
                     if ($overwrite) {
-                        echo "        Entry with key " . $envVar->getName() . " already exists in group, overwriting." . PHP_EOL;
                         unset($groupLines[$lineKey]);
+                        // record as replaced (only once — subsequent duplicate lines
+                        // don't count as additional replacements)
+                        if (!$entryExists) {
+                            $replaced[] = $envVar->getName();
+                        }
+                        $entryExists = true;
+                        // continue scanning to remove all duplicate lines with this key
                     } else {
-                        echo "        Entry with key " . $envVar->getName() . " already exists in group, skipping." . PHP_EOL;
                         $entryExists = true;
                     }
                 }
             }
             if (!$entryExists) {
                 $groupLines[] = $envVar->__toString();
-                $stats['added']++;
+                $added[] = $envVar->getName();
+            } elseif (!$overwrite) {
+                $skipped[] = $envVar->getName();
             } else {
-                $stats['skipped']++;
+                // overwrite=true and entry existed — write the fresh value
+                $groupLines[] = $envVar->__toString();
             }
         }
 
@@ -100,9 +119,17 @@ class EnvModifier
         // Ensure the file ends with a newline
         $lines[] = '';
 
-        echo "        Added " . $stats['added'] . " entries and skipped " . $stats['skipped'] . "." . PHP_EOL;
+        ConsoleOutput::debug(
+            sprintf('Env group "%s": %d added, %d replaced, %d skipped.', $groupName, count($added), count($replaced), count($skipped)),
+            2,
+        );
 
-        return implode(PHP_EOL, $lines);
+        return [
+            'content' => implode(PHP_EOL, $lines),
+            'added' => $added,
+            'replaced' => $replaced,
+            'skipped' => $skipped,
+        ];
     }
 
     /**

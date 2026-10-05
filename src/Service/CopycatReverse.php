@@ -28,7 +28,7 @@ class CopycatReverse extends CopycatBase implements CopycatInterface
     public function copy(CopyTargetEnum $target, string $file, bool $overwrite = true, bool $gitIgnore = false, bool $createTargetDirectory = false): void
     {
         try {
-            echo '    - Removing ' . $file . ' from ' . $target->value . '' . PHP_EOL;
+            ConsoleOutput::debug(sprintf("• Remove file %s from %s/ ...", basename($file), $target->value), 1);
             SystemValidator::validateSystem($this->packageInfo, $target->getSystem());
 
             if ($gitIgnore) {
@@ -48,7 +48,7 @@ class CopycatReverse extends CopycatBase implements CopycatInterface
     public function copyDirectory(CopyTargetEnum $target, string $source, bool $overwrite = true, bool $gitIgnore = false, bool $createTargetDirectory = false): void
     {
         try {
-            echo '    - Removing directory ' . $source . ' from ' . $target->value . '' . PHP_EOL;
+            ConsoleOutput::debug(sprintf("• Remove directory %s from %s/ ...", basename($source), $target->value), 1);
             SystemValidator::validateSystem($this->packageInfo, $target->getSystem());
 
             if ($gitIgnore) {
@@ -73,7 +73,7 @@ class CopycatReverse extends CopycatBase implements CopycatInterface
     public function jsonAdd(JsonTargetEnum $target, string $path, mixed $value, bool $overwrite = false): void
     {
         try {
-            echo "    - Removing value from " . $target->value . " at path " . $path . PHP_EOL;
+            ConsoleOutput::verbose(sprintf("• Removing value from %s at path %s", $target->value, $path), 1);
             JsonModifier::securityChecks(target: $target, path: $path);
             SystemValidator::validateSystem($this->packageInfo, $target->getSystem());
 
@@ -129,7 +129,7 @@ class CopycatReverse extends CopycatBase implements CopycatInterface
     private function ignoreFileRemove(string $method, string $fileName, KnownSystemsEnum $system): void
     {
         try {
-            echo "    - Removing " . $fileName . " entries:" . PHP_EOL;
+            ConsoleOutput::verbose(sprintf("• Removing entries from %s", $fileName), 1);
             SystemValidator::validateSystem($this->packageInfo, $system);
             $file = FileResolver::resolveInProject(
                 packageInfo: $this->packageInfo,
@@ -153,7 +153,7 @@ class CopycatReverse extends CopycatBase implements CopycatInterface
     public function symfonyBundleAdd(string $bundleClassName): void
     {
         try {
-            echo "    - Removing $bundleClassName from symfony bundles.php." . PHP_EOL;
+            ConsoleOutput::verbose(sprintf("• Removing %s from symfony bundles.php", $bundleClassName), 1);
             SystemValidator::validateSystem($this->packageInfo, KnownSystemsEnum::SYMFONY);
 
             $file = FileResolver::resolveInProject(
@@ -181,7 +181,7 @@ class CopycatReverse extends CopycatBase implements CopycatInterface
         ?array $tags = null,
     ): void {
         try {
-            echo "    - Removing service $serviceClass from symfony services.yaml." . PHP_EOL;
+            ConsoleOutput::verbose(sprintf("• Removing service %s from symfony services.yaml", $serviceClass), 1);
             SystemValidator::validateSystem($this->packageInfo, KnownSystemsEnum::SYMFONY);
 
             $file = FileResolver::resolveInProject(
@@ -208,7 +208,7 @@ class CopycatReverse extends CopycatBase implements CopycatInterface
     public function envAdd(EnvTargetEnum $target, array $entries, bool $overwrite = false): void
     {
         try {
-            echo "    - Removing environment variables for " . $this->packageInfo->getNamespace() . PHP_EOL;
+            ConsoleOutput::verbose(sprintf("• Removing environment variables for %s", $this->packageInfo->getNamespace()), 1);
             SystemValidator::validateSystem($this->packageInfo, $target->getSystem());
 
             $file = FileResolver::resolveInProject(
@@ -217,7 +217,7 @@ class CopycatReverse extends CopycatBase implements CopycatInterface
             );
 
             if (!file_exists($file)) {
-                echo "      No " . $target->value . " file found, skipping." . PHP_EOL;
+                ConsoleOutput::debug(sprintf("<dim>⏭</dim> %s does not exist, nothing to remove", $target->value), 2);
 
                 return;
             }

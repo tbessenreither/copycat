@@ -6,11 +6,14 @@ namespace Tbessenreither\Copycat\Tests\Modifier;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use Tbessenreither\Copycat\Modifier\JsonModifier;
+use Tbessenreither\Copycat\Service\ConsoleOutput;
 use Tbessenreither\Copycat\Tests\TestCase;
 use Throwable;
 
 #[CoversClass(JsonModifier::class)]
+#[UsesClass(ConsoleOutput::class)]
 class JsonModifierTest extends TestCase
 {
     private JsonModifier $jsonModifier;
@@ -25,8 +28,7 @@ class JsonModifierTest extends TestCase
 
     public function testAddNoOverwrite(): void
     {
-        ob_start();
-        $modifiedContent = $this->jsonModifier->add(
+        $result = $this->jsonModifier->add(
             fileContent: $this->testFileContent,
             path: 'newKey.subkey',
             value: [
@@ -37,9 +39,13 @@ class JsonModifierTest extends TestCase
             ],
             overwrite: false,
         );
-        $output = ob_get_clean();
 
-        $modifiedContentSimplified = explode("\n", $modifiedContent);
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('content', $result);
+        $this->assertArrayHasKey('changed', $result);
+        $this->assertTrue($result['changed']);
+
+        $modifiedContentSimplified = explode("\n", $result['content']);
         $modifiedContentSimplified = array_map('trim', $modifiedContentSimplified);
         $modifiedContentSimplified = implode("\n", $modifiedContentSimplified);
 
@@ -53,8 +59,6 @@ class JsonModifierTest extends TestCase
         ]);
 
         $this->assertStringContainsString($expectedOverall, $modifiedContentSimplified);
-        $this->assertStringNotContainsString('lowercase_var=lowercase_value', $modifiedContentSimplified);
-
     }
 
     #[DataProvider('provideTestDataForAdd')]
@@ -66,28 +70,21 @@ class JsonModifierTest extends TestCase
         bool $overwrite,
         string $expected,
         false|string $expectException,
+        bool $expectedChanged,
     ): void {
         if ($expectException !== false) {
             $this->expectExceptionMessage($expectException);
         }
 
-        try {
-            ob_start();
-            $modifiedContent = $this->jsonModifier->add(
-                fileContent: $fileContent,
-                path: $path,
-                value: $value,
-                overwrite: $overwrite,
-            );
-        } catch (Throwable $e) {
-            throw $e;
-        } finally {
-            ob_end_clean();
-        }
+        $result = $this->jsonModifier->add(
+            fileContent: $fileContent,
+            path: $path,
+            value: $value,
+            overwrite: $overwrite,
+        );
 
-        $modifiedContentFlat = $this->flattenJsonString($modifiedContent);
-
-        $this->assertSame($expected, $modifiedContentFlat);
+        $this->assertSame($expected, $this->flattenJsonString($result['content']));
+        $this->assertSame($expectedChanged, $result['changed']);
     }
 
     #[DataProvider('provideTestDataForRemove')]
@@ -137,6 +134,7 @@ class JsonModifierTest extends TestCase
                 'overwrite' => false,
                 'expected' => '{"newKey":"newValue"}',
                 'expectException' => false,
+                'expectedChanged' => true,
             ],
             [
                 'fileContent' => '{"existingKey":"existingValue"}',
@@ -144,7 +142,8 @@ class JsonModifierTest extends TestCase
                 'value' => 'newValue',
                 'overwrite' => false,
                 'expected' => '{"existingKey":"existingValue"}',
-                'expectException' => 'Cannot add value at path "existingKey" because there is already a ',
+                'expectException' => false,
+                'expectedChanged' => false,
             ],
             [
                 'fileContent' => '{"existingKey":"existingValue"}',
@@ -153,6 +152,7 @@ class JsonModifierTest extends TestCase
                 'overwrite' => true,
                 'expected' => '{"existingKey":"newValue"}',
                 'expectException' => false,
+                'expectedChanged' => true,
             ],
             [
                 'fileContent' => '{"nested":{"key":"value"}}',
@@ -161,6 +161,7 @@ class JsonModifierTest extends TestCase
                 'overwrite' => false,
                 'expected' => '{"nested":{"key":"value","newKey":"newValue"}}',
                 'expectException' => false,
+                'expectedChanged' => true,
             ],
             [
                 'fileContent' => '{"nested":{"key":"value"}}',
@@ -168,7 +169,8 @@ class JsonModifierTest extends TestCase
                 'value' => 'newValue',
                 'overwrite' => false,
                 'expected' => '{"nested":{"key":"value"}}',
-                'expectException' => 'Cannot add value at path "nested.key" because there is already a value',
+                'expectException' => false,
+                'expectedChanged' => false,
             ],
             [
                 'fileContent' => '{"nested":{"key":"value"}}',
@@ -177,6 +179,7 @@ class JsonModifierTest extends TestCase
                 'overwrite' => true,
                 'expected' => '{"nested":{"key":"newValue"}}',
                 'expectException' => false,
+                'expectedChanged' => true,
             ],
         ];
     }

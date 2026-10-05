@@ -21,7 +21,27 @@ abstract class CopycatBase
 
     protected function logError(string $method, Throwable $e): void
     {
-        echo '        ' . $method . " Error - " . $e->getMessage() . PHP_EOL;
+        $method = self::shortMethodName($method);
+
+        if (ConsoleOutput::isDebug()) {
+            ConsoleOutput::debug(sprintf("Method %s Error! - %s", $method, $e->getMessage()), 2);
+        } else {
+            ConsoleOutput::warning(sprintf('%s: %s', $method, $e->getMessage()), 2);
+        }
+    }
+
+    /**
+     * Reduces a method identifier to its bare method name.
+     *
+     * Callers pass either a hand-written short name (`'copyDirectory'`) or
+     * `__METHOD__` (`'…\\Copycat::envAdd'`); we always want the trailing
+     * `envAdd` for user-facing warnings.
+     */
+    private static function shortMethodName(string $method): string
+    {
+        $sep = strrpos($method, '::');
+
+        return $sep === false ? $method : substr($method, $sep + 2);
     }
 
     protected function getTargetDir(CopyTargetEnum $target): string

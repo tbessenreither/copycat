@@ -45,7 +45,7 @@ class NamespaceCrawler
                 $composerFile = $packageDirectory . '/composer.json';
 
                 if (!file_exists($composerFile)) {
-                    echo "No composer.json found in " . $composerFile . PHP_EOL;
+                    ConsoleOutput::debug("No composer.json found in " . $composerFile);
 
                     continue;
                 }
@@ -65,7 +65,7 @@ class NamespaceCrawler
                         if (count($path) === 1) {
                             $path = $path[0];
                         } else {
-                            echo "Multiple paths for namespace " . $namespace . " in package " . $vendorFolder . '/' . $packageFolder . PHP_EOL;
+                            ConsoleOutput::warning("Multiple paths for namespace " . $namespace . " in package " . $vendorFolder . '/' . $packageFolder);
 
                             continue;
                         }
@@ -88,7 +88,7 @@ class NamespaceCrawler
                             }
                         }
                         if (!$whitelistMatch) {
-                            echo "    Namespace " . $namespace . " is not in the whitelist, skipping." . PHP_EOL;
+                            ConsoleOutput::debug("Namespace " . $namespace . " is not in the whitelist, skipping.", 1);
 
                             continue;
                         }
