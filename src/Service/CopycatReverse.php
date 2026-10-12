@@ -113,6 +113,21 @@ class CopycatReverse extends CopycatBase implements CopycatInterface
     }
 
     /**
+     * On uninstall, resetting the group means the same thing as unregistering
+     * it — the block should be gone. Delegate to the same removal helper as
+     * gitIgnoreAdd() so the reverse operation is consistent regardless of
+     * which forward method the package originally used.
+     */
+    public function gitIgnoreReset(): void
+    {
+        $this->ignoreFileRemove(
+            method: 'gitIgnoreReset',
+            fileName: '.gitignore',
+            system: KnownSystemsEnum::GIT,
+        );
+    }
+
+    /**
      * Removes this package's group from the .dockerignore file in project root.
      * @param string|string[] $entries
      * @return void
@@ -121,6 +136,20 @@ class CopycatReverse extends CopycatBase implements CopycatInterface
     {
         $this->ignoreFileRemove(
             method: 'dockerIgnoreAdd',
+            fileName: '.dockerignore',
+            system: KnownSystemsEnum::DOCKER,
+        );
+    }
+
+    /**
+     * On uninstall, resetting the group means the same thing as unregistering
+     * it — the block should be gone. Delegate to the same removal helper as
+     * dockerIgnoreAdd().
+     */
+    public function dockerIgnoreReset(): void
+    {
+        $this->ignoreFileRemove(
+            method: 'dockerIgnoreReset',
             fileName: '.dockerignore',
             system: KnownSystemsEnum::DOCKER,
         );

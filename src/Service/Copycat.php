@@ -177,6 +177,19 @@ class Copycat extends CopycatBase implements CopycatInterface
     }
 
     /**
+     * Removes the namespaced group block from the .gitignore file, if present.
+     * Idempotent: no-op when the file is missing or when the package's block is not in it.
+     */
+    public function gitIgnoreReset(): void
+    {
+        $this->ignoreFileReset(
+            method: 'gitIgnoreReset',
+            fileName: '.gitignore',
+            system: KnownSystemsEnum::GIT,
+        );
+    }
+
+    /**
      * Adds one or more entries to the .dockerignore file in project root. If the .dockerignore file does not exist, it will be created.
      * Only runs in projects that contain a Dockerfile.
      * @param string|string[] $entries
@@ -189,6 +202,19 @@ class Copycat extends CopycatBase implements CopycatInterface
             fileName: '.dockerignore',
             system: KnownSystemsEnum::DOCKER,
             entries: $entries,
+        );
+    }
+
+    /**
+     * Removes the namespaced group block from the .dockerignore file, if present.
+     * Idempotent: no-op when the file is missing or when the package's block is not in it.
+     */
+    public function dockerIgnoreReset(): void
+    {
+        $this->ignoreFileReset(
+            method: 'dockerIgnoreReset',
+            fileName: '.dockerignore',
+            system: KnownSystemsEnum::DOCKER,
         );
     }
 
@@ -218,6 +244,44 @@ class Copycat extends CopycatBase implements CopycatInterface
             FileResolver::storeFileModification($file, $result['content']);
 
             $this->recorder->recordIgnore($fileName, $result['added'], $result['skipped']);
+
+        } catch (Throwable $e) {
+            $this->logError($method, $e);
+        }
+    }
+
+    private function ignoreFileReset(string $method, string $fileName, KnownSystemsEnum $system): void
+    {
+        try {
+            echo "    - Resetting group " . $this->packageInfo->getNamespace() . " in " . $fileName . PHP_EOL;
+            SystemValidator::validateSystem($this->packageInfo, $system);
+
+            try {
+                $file = FileResolver::resolveInProject(
+                    packageInfo: $this->packageInfo,
+                    file: $fileName,
+                    createIfNotExists: false,
+                );
+            } catch (InvalidArgumentException) {
+                echo "      " . $fileName . " does not exist yet; nothing to reset." . PHP_EOL;
+
+                return;
+            }
+
+            $content = FileResolver::loadFile($file);
+            if (!IgnoreFileModifier::hasGroup($content, $this->packageInfo->getNamespace())) {
+                echo "      Group " . $this->packageInfo->getNamespace() . " not present in " . $fileName . "; nothing to reset." . PHP_EOL;
+
+                return;
+            }
+
+            $modifiedContent = IgnoreFileModifier::remove(
+                fileContent: $content,
+                groupName: $this->packageInfo->getNamespace(),
+                fileName: $fileName,
+            );
+
+            FileResolver::storeFileModification($file, $modifiedContent);
 
         } catch (Throwable $e) {
             $this->logError($method, $e);
